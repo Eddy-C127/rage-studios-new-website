@@ -286,15 +286,17 @@ export class BookingService {
         .update({
           status: 'cancelled',
           cancelled_at: new Date().toISOString(),
+          attendance_status: null,
+          attendance_marked_at: null,
         })
         .eq('id', bookingId);
 
       if (error) throw error;
-      
-      // 🔄 ACTUALIZAR COUNT DE RESERVAS ACTIVAS AUTOMÁTICAMENTE
+
       this.refreshActiveBookingsCount();
     } catch (error) {
       console.error('Error cancelling booking:', error);
+      throw error;
     }
   }
 
@@ -438,12 +440,14 @@ export class BookingService {
         };
       }
 
-      // Cancelar la reserva
+      // Cancelar la reserva — limpiar attendance para que no contamine la racha
       const { error: cancelError } = await this.supabaseService.client
         .from('bookings')
         .update({
           status: 'cancelled',
           cancelled_at: new Date().toISOString(),
+          attendance_status: null,
+          attendance_marked_at: null,
         })
         .eq('id', bookingId);
 
@@ -477,13 +481,15 @@ export class BookingService {
       }
 
       // Los admins pueden cancelar sin restricción de tiempo
-      
-      // Cancelar la reserva
+
+      // Cancelar la reserva — limpiar attendance para que no contamine la racha
       const { error: cancelError } = await this.supabaseService.client
         .from('bookings')
         .update({
           status: 'cancelled',
           cancelled_at: new Date().toISOString(),
+          attendance_status: null,
+          attendance_marked_at: null,
         })
         .eq('id', bookingId);
 

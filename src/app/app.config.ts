@@ -3,7 +3,9 @@ import {
   provideZonelessChangeDetection,
   importProvidersFrom,
   LOCALE_ID,
+  ErrorHandler,
 } from '@angular/core';
+import { GlobalErrorHandler } from './core/services/global-error-handler.service';
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
 import { provideRouter } from '@angular/router';
@@ -43,6 +45,7 @@ export const appConfig: ApplicationConfig = {
       translation: PRIMENG_SPANISH_LOCALE
     }),
     { provide: LOCALE_ID, useValue: 'es' },
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     MessageService,
     importProvidersFrom(NgxStripeModule.forRoot(environment.STRIPE_PUBLISHABLE_KEY)),
   ],

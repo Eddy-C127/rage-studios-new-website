@@ -8,6 +8,7 @@ import { BookingsUiService } from '../../../../core/services/bookings-ui.service
 import { GiftcardUiService } from '../../../../core/services/giftcard-ui.service';
 import { PwaInstallService } from '../../../../core/services/pwa-install.service';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { BookingService } from '../../../../core/services/booking.service';
 import { BookingDialog } from '../../../booking/components/booking-dialog/booking-dialog';
 import { BookingsDialog } from '../../../../shared/components/bookings-dialog/bookings-dialog';
 import { PackagesModal } from '../../../../shared/components/packages-modal/packages-modal';
@@ -56,6 +57,7 @@ export class DashboardLayout implements OnInit, OnDestroy {
   protected giftcardUiService = inject(GiftcardUiService);
   protected pwaService = inject(PwaInstallService);
   protected notificationService = inject(NotificationService);
+  protected bookingService = inject(BookingService);
 
   isMobile = signal(false);
   sidebarExpanded = signal(false);
@@ -66,6 +68,7 @@ export class DashboardLayout implements OnInit, OnDestroy {
 
   unreadCount = this.notificationService.unreadNotificationsCount;
   notificationHistory = this.notificationService.history;
+  activeBookingsCount = this.bookingService.activeBookingsCount;
 
   navItems: NavItem[] = [
     { label: 'Dashboard',         icon: 'pi pi-home',          route: '/dashboard' },
@@ -93,6 +96,7 @@ export class DashboardLayout implements OnInit, OnDestroy {
     const user = this.supabaseService.getUser();
     if (user) {
       this.currentUser.set(user);
+      this.bookingService.setCurrentUser(user.id);
       this.supabaseService.getProfile(user.id).then(profile => {
         this.isAdmin.set(profile?.role === 'admin');
       }).catch(() => {});

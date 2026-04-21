@@ -113,78 +113,64 @@ export class Success implements OnInit, OnDestroy {
   }
 
   private async processPaymentWithRetries(sessionId: string) {
+    // Verify the authenticated user owns this session before polling
+    const { data: { user } } = await this.supabaseService.client.auth.getUser();
+    if (!user) {
+      throw new Error('Sesión de usuario no válida');
+    }
+
     for (let attempt = 0; attempt < this.MAX_RETRIES; attempt++) {
       this.retryAttempt.set(attempt + 1);
 
       if (attempt > 0) {
         const delay = this.RETRY_DELAYS[attempt - 1];
-        this.statusMessage.set(`Reintentando (${attempt + 1}/${this.MAX_RETRIES})...`);
+        this.statusMessage.set(`Verificando pago (${attempt + 1}/${this.MAX_RETRIES})...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       } else {
-        this.statusMessage.set('Procesando tu pago...');
+        this.statusMessage.set('Verificando tu pago con Stripe...');
       }
 
       try {
-        // Llamar al webhook para procesar el pago
-        const { error } = await this.supabaseService.client.functions.invoke(
-          'stripe-webhook',
-          {
-            body: {
-              session_id: sessionId,
-              type: 'checkout.session.completed',
-            },
-          }
-        );
+        // Poll the purchase record — only readable by the authenticated user (RLS enforced)
+        const { data: purchase, error } = await this.supabaseService.client
+          .from('purchases')
+          .select('*, credit_batches(*)')
+          .eq('stripe_session_id', sessionId)
+          .eq('user_id', user.id)
+          .single();
 
-        if (error) {
-          console.error(`❌ Intento ${attempt + 1} falló:`, error);
-
-          // Si es el último intento, lanzar error
+        if (error || !purchase) {
           if (attempt === this.MAX_RETRIES - 1) {
-            throw error;
+            throw new Error('No se encontró la compra asociada a este pago');
           }
-
-          // Continuar con siguiente intento
           continue;
         }
 
-        // ✅ Éxito - Procesar resultado
-        console.log(`✅ Pago procesado exitosamente en intento ${attempt + 1}`);
-        this.statusMessage.set('Actualizando tus créditos...');
-
-        // Esperar a que la BD se actualice
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // Refrescar créditos
-        await this.creditsService.refreshCredits();
-
-        // Marcar como exitoso
-        this.paymentState.set('success');
-        this.statusMessage.set('¡Pago completado exitosamente!');
-
-        // Segundo refresh como respaldo
-        setTimeout(async () => {
+        if (purchase.status === 'completed' && purchase.credit_batches?.length > 0) {
+          this.statusMessage.set('Actualizando tus créditos...');
           await this.creditsService.refreshCredits();
-        }, 2000);
+          this.paymentState.set('success');
+          this.statusMessage.set('¡Pago completado exitosamente!');
+          return;
+        }
 
-        return; // Salir del loop de reintentos
+        // Payment not yet processed by the Stripe webhook — retry
+        if (attempt === this.MAX_RETRIES - 1) {
+          throw new Error('El pago está siendo procesado. Revisa tus créditos en unos minutos.');
+        }
 
       } catch (error: any) {
-        console.error(`❌ Error en intento ${attempt + 1}:`, error);
-
-        // Si es el último intento, lanzar error
         if (attempt === this.MAX_RETRIES - 1) {
           throw error;
         }
       }
     }
 
-    // Si llegamos aquí, todos los intentos fallaron
-    throw new Error('No se pudo procesar el pago después de varios intentos');
+    throw new Error('No se pudo verificar el pago después de varios intentos');
   }
 
   goToAccount() {
-    this.router.navigate(['/mi-cuenta']);
+    this.router.navigate(['/dashboard']);
   }
 
   goToHome() {

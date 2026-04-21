@@ -188,32 +188,17 @@ export class ScheduleService {
   }
 
   /**
-   * Convierte ScheduleSlots a formato TimeSlot para retrocompatibilidad
+   * Convierte ScheduleSlots a formato TimeSlot para retrocompatibilidad.
+   * Cada slot de BD representa una clase individual, no un rango de horas.
    */
   private convertScheduleSlotsToTimeSlots(scheduleSlots: ScheduleSlot[]): TimeSlot[] {
-    const timeSlots: TimeSlot[] = [];
-
-    scheduleSlots.forEach(slot => {
-      // Generar slots de 1 hora dentro del rango start_time - end_time
-      const startTime = this.parseTime(slot.start_time);
-      const endTime = this.parseTime(slot.end_time);
-      
-      let current = startTime;
-      while (current < endTime) {
-        const timeStr = this.formatTime(current);
-        const coachNames = this.formatCoachNames(slot.coaches);
-        
-        timeSlots.push({
-          time: timeStr,
-          coach: coachNames,
-          available: true, // Se calculará después con bookings
-          occupiedBeds: 0,   // Se calculará después con bookings
-          slot_id: slot.id
-        });
-        
-        current += 1; // Incrementar 1 hora
-      }
-    });
+    const timeSlots: TimeSlot[] = scheduleSlots.map(slot => ({
+      time: slot.start_time.substring(0, 5), // "HH:MM" preservando minutos
+      coach: this.formatCoachNames(slot.coaches),
+      available: true,
+      occupiedBeds: 0,
+      slot_id: slot.id
+    }));
 
     return timeSlots.sort((a, b) => a.time.localeCompare(b.time));
   }
@@ -224,31 +209,15 @@ export class ScheduleService {
   private formatCoachNames(coaches: Coach[]): string {
     if (coaches.length === 0) return '';
     if (coaches.length === 1) return coaches[0].name;
-    
-    // Si hay múltiples coaches, usar formato "COACH1/COACH2"
+
     const primaryCoach = coaches.find(c => c.is_primary);
     const otherCoaches = coaches.filter(c => !c.is_primary);
-    
+
     if (primaryCoach && otherCoaches.length > 0) {
       return `${primaryCoach.name}/${otherCoaches.map(c => c.name).join('/')}`;
     }
-    
+
     return coaches.map(c => c.name).join('/');
-  }
-
-  /**
-   * Parse time string "HH:MM" to hours number
-   */
-  private parseTime(timeStr: string): number {
-    const [hours] = timeStr.split(':').map(Number);
-    return hours;
-  }
-
-  /**
-   * Format hours number to "HH:MM" string
-   */
-  private formatTime(hours: number): string {
-    return `${hours.toString().padStart(2, '0')}:00`;
   }
 
   /**

@@ -238,7 +238,7 @@ export class SupabaseService {
 
   async resetPasswordForEmail(email: string) {
     const { data, error } = await this.supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://ragestudios.mx/mi-cuenta'
+      redirectTo: `${environment.baseUrl}/dashboard/cambiar-contrasena`
     });
     
     if (error) throw error;

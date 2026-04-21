@@ -1,33 +1,30 @@
 // Estilos para días con reservas en el calendario
 :host ::ng-deep {
-  .booking-day {
-    background-color: var(--p-primary-color) !important;
-    color: var(--p-primary-contrast-color) !important;
-    border-radius: 6px;
-    font-weight: 600;
-    padding: 0.375rem;
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    
-    &::after {
-      content: '';
-      position: absolute;
-      top: -2px;
-      right: -2px;
-      width: 8px;
-      height: 8px;
-      background-color: var(--p-green-500);
-      border-radius: 50%;
-      border: 2px solid white;
-    }
-    
-    &:hover {
-      background-color: var(--p-primary-600) !important;
-    }
+  // Estilo ultra-específico para forzar el círculo verde
+  .p-datepicker-calendar td span.booking-day {
+    background-color: #10B981 !important;
+    color: #ffffff !important;
+    border-radius: 50% !important;
+    font-weight: 800 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 2.2rem !important;
+    height: 2.2rem !important;
+    margin: 0 auto !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4) !important;
+    border: 2px solid #ffffff !important;
+  }
+
+  // Estilo para cuando el día con reserva es el seleccionado (mezcla visual)
+  .p-datepicker-day-selected .booking-day {
+    background-color: #059669 !important; // Un verde más oscuro para el seleccionado
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.6) !important;
+  }
+
+  // Asegurar que el día seleccionado mantenga su estilo primario pero respete el círculo
+  .p-datepicker-day-selected {
+    border-radius: 50% !important;
   }
   
   // Mejorar el scroll en la lista de reservas

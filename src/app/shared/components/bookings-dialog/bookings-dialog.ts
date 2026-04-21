@@ -86,23 +86,32 @@ export class BookingsDialog implements OnInit, OnDestroy {
   // Método público para inicializar desde el componente padre
   public async openDialog() {
     this.visible.set(true);
-    // Esperar un tick para que el dialog se abra
+    
+    // Asegurar que tenemos el ID del usuario antes de cargar datos
+    const user = this.supabaseService.getUser();
+    if (user) {
+      this.currentUserId = user.id;
+    }
+
+    // Esperar un tick para que el dialog se abra y el datepicker se renderice
     setTimeout(() => {
       this.initializeDialogData();
-    }, 100);
+    }, 150);
   }
 
   async loadBookingDates() {
     if (!this.currentUserId) {
+      console.warn('⚠️ [Bookings Dialog] No User ID available for loadBookingDates');
       this.bookingDates.set([]);
       return;
     }
 
     try {
       const dates = await this.bookingService.getUserBookingDates(this.currentUserId);
+      console.log('✅ [Bookings Dialog] Unique booking dates loaded:', dates);
       this.bookingDates.set(dates);
     } catch (error) {
-      console.error('Error loading booking dates:', error);
+      console.error('❌ Error loading booking dates:', error);
       this.bookingDates.set([]);
     }
   }
@@ -345,17 +354,22 @@ export class BookingsDialog implements OnInit, OnDestroy {
 
   // Función para verificar si una fecha tiene reservas
   hasBookingOnDate(date: any): boolean {
-    // Validación correcta: month puede ser 0 (enero), así que no usar !date.month
     if (!date || date.year == null || date.month == null || date.day == null) {
       return false;
     }
 
-    // Construir fecha en formato YYYY-MM-DD
     const year = date.year;
-    const month = (date.month + 1).toString().padStart(2, '0'); // month viene 0-indexed
+    const month = (date.month + 1).toString().padStart(2, '0');
     const day = date.day.toString().padStart(2, '0');
     const dateStr = `${year}-${month}-${day}`;
 
-    return this.bookingDates().includes(dateStr);
+    const hasBooking = this.bookingDates().includes(dateStr);
+    
+    // Log para debug interno si es necesario (puedes borrarlo después)
+    if (hasBooking) {
+      console.log(`✨ [Bookings Dialog] Encontrada reserva para: ${dateStr}`);
+    }
+
+    return hasBooking;
   }
 }

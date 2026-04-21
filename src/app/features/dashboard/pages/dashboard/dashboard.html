@@ -427,6 +427,19 @@
           </div>
         </div>
 
+        <!-- Barra de Progreso de Fuego -->
+        <div class="streak-progress-module mb-6" [class.is-record-broken]="isRecordBroken()">
+          <div class="streak-progress-track">
+            <div class="streak-progress-fill" [style.width.%]="streakProgress()">
+              <div class="streak-flame">🔥</div>
+            </div>
+          </div>
+          <div class="flex justify-between items-center mt-2 px-1">
+             <span class="streak-status-hint" [innerHTML]="streakStatusLabel()"></span>
+             <span class="text-[10px] font-black text-black/25 uppercase tracking-tighter">{{ attendedDaysCount() }}/5 DÍAS</span>
+          </div>
+        </div>
+
         <div class="text-[10px] font-bold tracking-[0.18em] uppercase text-black/30 mb-3">Esta semana</div>
 
         <div class="grid grid-cols-7 gap-1.5">

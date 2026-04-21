@@ -203,7 +203,12 @@
 
       <!-- Mis Reservas -->
       <button class="bottom-nav__item" (click)="bookingsUiService.openBookingsDialog()">
-        <i class="pi pi-calendar bottom-nav__icon"></i>
+        <div class="relative inline-flex flex-col items-center">
+          <i class="pi pi-calendar bottom-nav__icon"></i>
+          @if (activeBookingsCount() > 0) {
+            <span class="active-badge">{{ activeBookingsCount() }}</span>
+          }
+        </div>
         <span class="bottom-nav__label">Reservas</span>
       </button>
 

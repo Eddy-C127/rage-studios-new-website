@@ -10,7 +10,7 @@ import { PwaInstallService } from './core/services/pwa-install.service';
 import { NotificationService } from './core/services/notification.service';
 import { filter } from 'rxjs/operators';
 
-const TOPBAR_HIDDEN_ROUTES = ['/dashboard', '/admin'];
+const TOPBAR_HIDDEN_ROUTES = ['/dashboard'];
 
 @Component({
   selector: 'app-root',
@@ -24,10 +24,10 @@ export class App implements OnInit {
   protected showTopbar = signal(true);
 
   private router = inject(Router);
-  
+
   private readonly pwaInstallService = inject(PwaInstallService);
   private readonly notificationService = inject(NotificationService);
-  
+
   ngOnInit(): void {
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd)

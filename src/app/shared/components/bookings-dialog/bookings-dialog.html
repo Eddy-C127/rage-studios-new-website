@@ -23,7 +23,7 @@
         (onSelect)="onDateSelect($event)">
 
         <!-- Template para customizar días con reservas -->
-        <ng-template #date let-date>
+        <ng-template pTemplate="date" let-date>
           @if (hasBookingOnDate(date)) {
             <span class="booking-day">
               {{ date.day }}

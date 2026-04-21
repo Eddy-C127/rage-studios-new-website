@@ -104,3 +104,93 @@
   }
 }
 
+/* 🔥 Animated Streak Progress Bar */
+.streak-progress-module {
+  .streak-progress-track {
+    width: 100%;
+    height: 12px;
+    background: #F3F4F6;
+    border-radius: 100px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: visible; // To allow flame to pop out
+  }
+
+  .streak-progress-fill {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, #f59e0b, #ef4444, #fbbf24);
+    background-size: 200% auto;
+    position: relative;
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: flow-fire 3s linear infinite;
+    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(rgba(255,255,255,0.1) 0%, transparent 100%);
+      border-radius: 100px;
+    }
+  }
+
+  .streak-flame {
+    position: absolute;
+    right: -12px;
+    top: -14px;
+    font-size: 22px;
+    filter: drop-shadow(0 0 8px rgba(255, 100, 0, 0.6));
+    animation: flicker 0.1s infinite alternate, floating 1.5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .streak-status-hint {
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(0, 0, 0, 0.6);
+    transition: color 0.3s;
+  }
+
+  /* ⚡ Record Broken State */
+  &.is-record-broken {
+    .streak-progress-track {
+      background: #E0F2FE;
+    }
+    
+    .streak-progress-fill {
+      background: linear-gradient(90deg, #3b82f6, #0ea5e9, #6366f1);
+      background-size: 200% auto;
+      box-shadow: 0 0 20px rgba(14, 165, 233, 0.5);
+      animation: flow-fire 1.5s linear infinite;
+    }
+
+    .streak-flame {
+      filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.8)) hue-rotate(180deg);
+      animation: flicker 0.05s infinite alternate, floating 1s ease-in-out infinite;
+    }
+
+    .streak-status-hint {
+      color: #0369a1;
+      text-shadow: 0 0 10px rgba(3, 105, 161, 0.1);
+    }
+  }
+}
+
+@keyframes flow-fire {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes flicker {
+  0% { opacity: 0.8; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes floating {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}

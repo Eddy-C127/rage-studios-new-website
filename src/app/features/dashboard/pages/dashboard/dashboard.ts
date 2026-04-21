@@ -114,6 +114,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loadingBookings = signal(false);
   cancellingId = signal<string | null>(null);
 
+  // ── Streak Progress Analytics ──────────────────────────────────
+  
+  attendedDaysCount = computed(() => 
+    this.weekAttended().filter(attended => attended).length
+  );
+
+  streakProgress = computed(() => {
+    const count = this.attendedDaysCount();
+    return Math.min((count / 5) * 100, 100);
+  });
+
+  isRecordBroken = computed(() => this.attendedDaysCount() > 5);
+
+  streakStatusLabel = computed(() => {
+    const count = this.attendedDaysCount();
+    if (count === 0) return 'EL PRIMER PASO <b>ES HOY!</b>';
+    if (count < 3) return 'SIGUE ASÍ, <b>HOY LO LOGRASTE!</b>';
+    if (count < 4) return '<b>CONECTA CON</b> TU FUERZA!';
+    if (count < 5) return 'DISCIPLINA <b>QUE FLUYE!</b>';
+    if (count === 5) return 'LOGRO IMPECABLE. <b>¡BRILLA!</b>';
+    if (count === 6) return '<b>MÁS ALLÁ</b> DE LO POSIBLE!';
+    return 'EQUILIBRIO Y <b>CONSTANCIA PURA!</b>';
+  });
+
   ngOnInit() {
     this.authSub = this.supabase.currentUser$.subscribe(async user => {
       if (user) {
@@ -303,9 +327,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     
     try {
       const bookings = await this.bookingService.getUserBookings(userId);
-      // Filtrar por esta semana y status 'attended'
+      // Solo reservas activas con asistencia confirmada (excluye canceladas)
       bookings.forEach(b => {
-        if (b.attendance_status === 'attended') {
+        if (b.status === 'active' && b.attendance_status === 'attended') {
           const bDate = new Date(b.session_date + 'T00:00:00');
           const dayDiff = Math.floor((bDate.getTime() - monday.getTime()) / (1000 * 60 * 60 * 24));
           if (dayDiff >= 0 && dayDiff < 7) {

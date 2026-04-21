@@ -9,7 +9,6 @@ import { CurrencyPipe } from '@angular/common';
 import { DividerModule } from 'primeng/divider';
 import { PackagesService, Package } from '../../../landing/services/packages.service';
 import { PaymentService } from '../../../../core/services/payment.service';
-import { StripeService } from 'ngx-stripe';
 import { SupabaseService } from '../../../../core/services/supabase-service';
 
 @Component({
@@ -33,7 +32,6 @@ export class Checkout implements OnInit {
   private paymentService = inject(PaymentService);
   private supabaseService = inject(SupabaseService);
   private messageService = inject(MessageService);
-  private stripeService = inject(StripeService);
   
   packageData = signal<Package | null>(null);
   isLoading = signal(true);
@@ -85,34 +83,12 @@ export class Checkout implements OnInit {
   this.isProcessing.set(true);
   
   try {
-    console.log('Starting payment process for package:', pkg);
-    
     const session = await this.paymentService.createCheckoutSession(pkg, user.id);
-    
-    console.log('Session received:', session);
-    
-    if (session && session.sessionId) {
-      // Usar redirectToCheckout directamente con cast para evitar errores de compilación
-      (this.stripeService as any).redirectToCheckout({ sessionId: session.sessionId })
-        .subscribe({
-          next: (result: any) => {
-            console.log('Redirect result:', result);
-            if (result && result.error) {
-              throw new Error(result.error.message);
-            }
-          },
-          error: (err: any) => {
-            console.error('Stripe redirect error:', err);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: err.message || 'Error al procesar el pago'
-            });
-            this.isProcessing.set(false);
-          }
-        });
+
+    if (session?.url) {
+      window.location.href = session.url;
     } else {
-      throw new Error('No se recibió session ID');
+      throw new Error('No se recibió URL de pago de Stripe');
     }
   } catch (error: any) {
     console.error('Payment error:', error);

@@ -1,8 +1,6 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
-import { StripeService } from 'ngx-stripe';
 import { environment } from '../../../environments/environment';
 import { Package } from '../../features/landing/services/packages.service';
-import { firstValueFrom } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
 import { SupabaseService } from './supabase-service';
 
@@ -50,7 +48,6 @@ export interface CreditHistory {
   providedIn: 'root',
 })
 export class PaymentService {
-  private stripeService = inject(StripeService);
   private supabaseService = inject(SupabaseService);
   private platformId = inject(PLATFORM_ID);
 
@@ -84,9 +81,6 @@ export class PaymentService {
       const successUrl = `${environment.baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`;
       const cancelUrl = `${environment.baseUrl}/checkout/cancel`;
 
-      console.log('Creating checkout with URLs:', { successUrl, cancelUrl });
-
-      // Llamar a Edge Function
       const { data, error } = await this.supabaseService.client.functions.invoke(
         'create-checkout-session',
         {
@@ -100,15 +94,10 @@ export class PaymentService {
         }
       );
 
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('Checkout session created:', data);
       return data;
     } catch (error) {
-      console.error('Error creating checkout session:', error);
       throw error;
     }
   }

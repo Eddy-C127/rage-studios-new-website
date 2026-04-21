@@ -339,8 +339,8 @@ export class NotificationService implements OnDestroy {
 
         nativeNotification.onclick = () => {
           window.focus();
-          const url = notification.data?.['actionUrl'] || '/account/bookings';
-          window.location.href = url;
+          const url = notification.data?.['actionUrl'] || '/dashboard/reservas';
+          this.router.navigateByUrl(url);
           nativeNotification.close();
         };
       }
