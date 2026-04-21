@@ -10,12 +10,7 @@ export const landingGuard: CanActivateFn = async () => {
     const { data: { session } } = await supabaseService.client.auth.getSession();
     if (!session?.user) return true;
 
-    const profile = await supabaseService.getProfile(session.user.id);
-    if (profile?.role === 'admin') {
-      router.navigate(['/admin']);
-    } else {
-      router.navigate(['/dashboard']);
-    }
+    router.navigate(['/dashboard']);
     return false;
   } catch {
     return true;

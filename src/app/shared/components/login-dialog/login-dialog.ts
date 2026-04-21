@@ -62,10 +62,7 @@ export class LoginDialog {
     const { email, password } = this.loginForm.value;
     
     try {
-      const data = await this.supabaseService.signIn(email, password);
-
-      const profile = data?.user ? await this.supabaseService.getProfile(data.user.id) : null;
-      const isAdmin = profile?.role === 'admin';
+      await this.supabaseService.signIn(email, password);
 
       this.messageService.add({
         severity: 'success',
@@ -77,7 +74,7 @@ export class LoginDialog {
       setTimeout(() => {
         this.visible.set(false);
         this.loginForm.reset();
-        this.router.navigate([isAdmin ? '/admin' : '/dashboard']);
+        this.router.navigate(['/dashboard']);
       }, 500);
       
     } catch (error: any) {
