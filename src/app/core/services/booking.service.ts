@@ -25,6 +25,8 @@ export interface Booking {
   credits_used: number;
   credit_batch_id?: string;
   status: string;
+  attendance_status?: 'attended' | 'missed' | null;
+  attendance_marked_at?: string;
 }
 
 @Injectable({
@@ -584,5 +586,87 @@ export class BookingService {
     }
 
     console.log(`✅ [Admin] Devolución exitosa: ${totalCreditsToRefund} créditos devueltos a ${historyRecords.length} lotes`);
+  }
+
+  // ── attendance tracking ──────────────────────────────────────────
+
+  /**
+   * Actualiza el estado de asistencia de una reserva
+   */
+  async updateAttendance(bookingId: string, status: 'attended' | 'missed'): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await this.supabaseService.client
+        .from('bookings')
+        .update({
+          attendance_status: status,
+          attendance_marked_at: new Date().toISOString()
+        })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error updating attendance:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Obtiene la reserva más inminente (pasada o futura cercana) que no ha sido marcada
+   */
+  async getNextImmediateBooking(userId: string): Promise<any | null> {
+    const today = getTodayLocalYYYYMMDD();
+    
+    // Buscamos reservas de hoy o futuras que estén activas y sin asistencia marcada
+    const { data, error } = await this.supabaseService.client
+      .from('bookings')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .is('attendance_status', null)
+      .gte('session_date', today)
+      .order('session_date', { ascending: true })
+      .order('session_time', { ascending: true })
+      .limit(1);
+
+    if (error) {
+      console.error('Error fetching next immediate booking:', error);
+      return null;
+    }
+
+    return data?.[0] || null;
+  }
+
+  /**
+   * Calcula la racha actual basada en la secuencia de clases asistidas
+   */
+  async calculateStreak(userId: string): Promise<number> {
+    try {
+      const { data, error } = await this.supabaseService.client
+        .from('bookings')
+        .select('attendance_status')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .not('attendance_status', 'is', null)
+        .order('session_date', { ascending: false })
+        .order('session_time', { ascending: false });
+
+      if (error) throw error;
+      if (!data || data.length === 0) return 0;
+
+      let streak = 0;
+      for (const booking of data) {
+        if (booking.attendance_status === 'attended') {
+          streak++;
+        } else if (booking.attendance_status === 'missed') {
+          // La racha se rompe con una falta
+          break;
+        }
+      }
+      return streak;
+    } catch (error) {
+      console.error('Error calculating streak:', error);
+      return 0;
+    }
   }
 }

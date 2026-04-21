@@ -55,3 +55,52 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* 📅 Attendance Module Styles */
+.attendance-module {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  
+  &:hover {
+    transform: translateY(-2px);
+    shadow: 0 12px 40px -8px rgba(0,0,0,0.15);
+  }
+}
+
+.attendance-btn {
+  &--check {
+    background: #10B981; // Emerald 500
+    color: white;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    
+    &:hover:not(:disabled) {
+      background: #059669;
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+  }
+
+  &--x {
+    background: #F9FAFB; // Gray 50
+    color: #EF4444; // Red 500
+    border: 1px solid #F3F4F6;
+    
+    i, span {
+      color: #EF4444;
+    }
+    
+    &:hover:not(:disabled) {
+      background: #FEF2F2; // Red 50 shadow
+      border-color: #FEE2E2;
+      transform: translateY(-1px);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+

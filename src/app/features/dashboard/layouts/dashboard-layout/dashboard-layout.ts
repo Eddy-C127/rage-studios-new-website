@@ -15,6 +15,9 @@ import { GiftcardRedeemDialog } from '../../../landing/components/giftcard-redee
 import { PwaInstallDialogComponent } from '../../../../shared/components/pwa-install-dialog/pwa-install-dialog';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { DrawerModule } from 'primeng/drawer';
+import { AvatarModule } from 'primeng/avatar';
+import { MenuModule } from 'primeng/menu';
 import { Subscription } from 'rxjs';
 
 interface NavItem {
@@ -26,7 +29,19 @@ interface NavItem {
 @Component({
   selector: 'app-dashboard-layout',
   standalone: true,
-  imports: [RouterModule, DatePipe, BookingDialog, BookingsDialog, PackagesModal, GiftcardRedeemDialog, PwaInstallDialogComponent, ToastModule],
+  imports: [
+    RouterModule, 
+    DatePipe, 
+    BookingDialog, 
+    BookingsDialog, 
+    PackagesModal, 
+    GiftcardRedeemDialog, 
+    PwaInstallDialogComponent, 
+    ToastModule,
+    DrawerModule,
+    AvatarModule,
+    MenuModule
+  ],
   providers: [MessageService],
   templateUrl: './dashboard-layout.html',
   styleUrl: './dashboard-layout.scss'
@@ -46,6 +61,8 @@ export class DashboardLayout implements OnInit, OnDestroy {
   sidebarExpanded = signal(false);
   showNotifications = signal(false);
   isAdmin = signal(false);
+  mobileSidebarVisible = signal(false);
+  currentUser = signal<any>(null);
 
   unreadCount = this.notificationService.unreadNotificationsCount;
   notificationHistory = this.notificationService.history;
@@ -75,9 +92,22 @@ export class DashboardLayout implements OnInit, OnDestroy {
 
     const user = this.supabaseService.getUser();
     if (user) {
+      this.currentUser.set(user);
       this.supabaseService.getProfile(user.id).then(profile => {
         this.isAdmin.set(profile?.role === 'admin');
       }).catch(() => {});
+    }
+  }
+
+  getUserDisplayName(): string {
+    const user = this.currentUser();
+    return user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Mi cuenta';
+  }
+
+  navigateTo(route: string) {
+    this.router.navigate([route]);
+    if (this.isMobile()) {
+      this.mobileSidebarVisible.set(false);
     }
   }
 

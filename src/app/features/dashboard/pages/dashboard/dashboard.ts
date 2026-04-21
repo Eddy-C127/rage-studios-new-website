@@ -64,11 +64,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private userId = signal<string | null>(null);
 
   userProfile = signal<any>(null);
-  streak = signal(14);
+  streak = signal(0);
   membership = signal('ÉLITE');
 
+  nextBooking = signal<any | null>(null);
+  markingAttendance = signal(false);
+
   readonly weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-  readonly weekAttended = [true, true, true, true, false, true, false];
+  weekAttended = signal<boolean[]>([false, false, false, false, false, false, false]);
 
   quickActions = [
     { id: 'reservar', label: 'Reservar Clase',   icon: 'pi pi-calendar',      route: '/dashboard/reservas' },
@@ -119,6 +122,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (profile) this.userProfile.set(profile);
         await this.buildWeekDays(user.id);
         await this.loadCredits();
+        await this.loadAttendanceData();
       }
     });
 
@@ -258,6 +262,85 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ── Attendance Logic ───────────────────────────────────────────
+
+  async loadAttendanceData() {
+    const uid = this.userId();
+    if (!uid) return;
+
+    try {
+      // 1. Cargar la racha real
+      const streakValue = await this.bookingService.calculateStreak(uid);
+      this.streak.set(streakValue);
+
+      // 2. Cargar la siguiente cita inminente
+      const next = await this.bookingService.getNextImmediateBooking(uid);
+      if (next) {
+        this.nextBooking.set({
+          ...next,
+          timeFormatted: this.formatTime(next.session_time),
+          fullDateFormatted: this.formatFullDate(next.session_date)
+        });
+      } else {
+        this.nextBooking.set(null);
+      }
+
+      // 3. Cargar historial de la semana actual para el grid
+      await this.loadWeeklyAttendance(uid);
+    } catch (error) {
+      console.error('Error loading attendance data:', error);
+    }
+  }
+
+  private async loadWeeklyAttendance(userId: string) {
+    const today = new Date();
+    // Obtener el Lunes de esta semana
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(today.setDate(diff));
+    
+    const weekData = new Array(7).fill(false);
+    
+    try {
+      const bookings = await this.bookingService.getUserBookings(userId);
+      // Filtrar por esta semana y status 'attended'
+      bookings.forEach(b => {
+        if (b.attendance_status === 'attended') {
+          const bDate = new Date(b.session_date + 'T00:00:00');
+          const dayDiff = Math.floor((bDate.getTime() - monday.getTime()) / (1000 * 60 * 60 * 24));
+          if (dayDiff >= 0 && dayDiff < 7) {
+            weekData[dayDiff] = true;
+          }
+        }
+      });
+      this.weekAttended.set(weekData);
+    } catch (error) {
+      console.error('Error loading weekly attendance:', error);
+    }
+  }
+
+  async onMarkAttendance(status: 'attended' | 'missed') {
+    const booking = this.nextBooking();
+    if (!booking || this.markingAttendance()) return;
+
+    this.markingAttendance.set(true);
+    try {
+      const result = await this.bookingService.updateAttendance(booking.id, status);
+      if (result.success) {
+        const msg = status === 'attended' ? '¡Asistencia marcada! ¡Sigue así!' : 'Entendido, registraremos la inasistencia.';
+        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: msg });
+        
+        // Recargar datos para actualizar racha y ocultar módulo
+        await this.loadAttendanceData();
+        await this.buildWeekDays(this.userId()!);
+      } else {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar la asistencia' });
+      }
+    } finally {
+      this.markingAttendance.set(false);
+    }
+  }
+
   openBookingDialog() { this.bookingUiService.openBookingDialog(); }
   openPackagesModal() { this.packagesUiService.openPackagesModal(); }
   openGiftcardDialog() { this.giftcardUiService.openGiftcardDialog(); }
@@ -266,5 +349,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (action.id === 'reservar') { this.openBookingDialog(); return; }
     if (action.id === 'comprar') { this.openPackagesModal(); return; }
     if (action.route) this.router.navigate([action.route]);
+  }
+
+  private formatFullDate(dateStr: string): string {
+    const date = new Date(dateStr + 'T00:00:00');
+    return new Intl.DateTimeFormat('es-MX', { 
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'long' 
+    }).format(date).toUpperCase();
   }
 }

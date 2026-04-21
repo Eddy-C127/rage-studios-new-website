@@ -10,10 +10,11 @@
       (mouseenter)="sidebarExpanded.set(true)"
       (mouseleave)="sidebarExpanded.set(false)">
 
-      <!-- Logo -->
       <div class="sidebar__logo">
-        <span class="sidebar__logo-mark">RS</span>
-        <span class="sidebar__logo-label">RAGE STUDIOS</span>
+        <span class="sidebar__logo-text">
+          <span class="sidebar__logo-text--red">RAGE</span>
+          <span class="sidebar__logo-text--label"> STUDIOS</span>
+        </span>
       </div>
 
       <!-- Divider -->
@@ -74,21 +75,66 @@
   }
 
   <!-- ═══════════════════════════════════════════
+       MOBILE DRAWER (md-)
+  ════════════════════════════════════════════ -->
+  @if (isMobile()) {
+    <p-drawer 
+      [(visible)]="mobileSidebarVisible" 
+      [modal]="true"
+      [dismissible]="true"
+      position="left"
+      styleClass="mobile-drawer">
+      
+      <ng-template pTemplate="header">
+        <div class="drawer-header">
+          <p-avatar 
+            [label]="getUserDisplayName().charAt(0).toUpperCase()" 
+            shape="circle"
+            size="large"
+            class="drawer-avatar">
+          </p-avatar>
+          <div class="drawer-user-info">
+            <div class="drawer-user-name">{{ getUserDisplayName() }}</div>
+            <div class="drawer-user-role">Dashboard Usuario</div>
+          </div>
+        </div>
+      </ng-template>
+      
+      <div class="drawer-content">
+        <nav class="drawer-nav">
+          @for (item of navItems; track item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="drawer-item--active"
+              [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+              class="drawer-item"
+              (click)="mobileSidebarVisible.set(false)">
+              <i [class]="item.icon + ' drawer-item-icon'"></i>
+              <span class="drawer-item-label">{{ item.label }}</span>
+            </a>
+          }
+        </nav>
+      </div>
+    </p-drawer>
+  }
+
+  <!-- ═══════════════════════════════════════════
        MOBILE TOP HEADER (md-)
   ════════════════════════════════════════════ -->
   @if (isMobile()) {
     <header class="mobile-topbar">
-      <span class="mobile-topbar__logo">RS</span>
+      <span class="mobile-topbar__logo-text">
+        <span class="mobile-topbar__logo-text--red">RAGE</span> STUDIOS
+      </span>
       <div class="mobile-topbar__actions">
-
-        <!-- Descargar App -->
-        <button class="mobile-topbar__btn" (click)="openInstallDialog()" title="Descargar App">
-          <i class="pi pi-download"></i>
-        </button>
-
         <!-- Recargar -->
         <button class="mobile-topbar__btn" (click)="reload()" title="Recargar">
           <i class="pi pi-refresh"></i>
+        </button>
+
+        <!-- Instalar App -->
+        <button class="mobile-topbar__btn" (click)="openInstallDialog()" title="Instalar App">
+          <i class="pi pi-download"></i>
         </button>
 
         <!-- Notificaciones -->
@@ -99,9 +145,8 @@
               <span class="notif-badge">{{ unreadCount() > 9 ? '+9' : unreadCount() }}</span>
             }
           </button>
-
           @if (showNotifications()) {
-            <div class="notif-panel">
+             <div class="notif-panel">
               <div class="notif-panel__header">
                 <span class="notif-panel__title">Notificaciones</span>
                 <button (click)="showNotifications.set(false)" class="notif-panel__close">
@@ -134,7 +179,6 @@
             </div>
           }
         </div>
-
       </div>
     </header>
   }
@@ -151,33 +195,46 @@
   ════════════════════════════════════════════ -->
   @if (isMobile()) {
     <nav class="bottom-nav">
-      @for (item of bottomNavItems; track item.route) {
-        @if (item.route === '/dashboard/reservas') {
-          <button class="bottom-nav__item" (click)="bookingsUiService.openBookingsDialog()">
-            <i [class]="item.icon + ' bottom-nav__icon'"></i>
-            <span class="bottom-nav__label">{{ item.label }}</span>
-          </button>
-        } @else {
-          <a
-            [routerLink]="item.route"
-            routerLinkActive="bottom-nav__item--active"
-            [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
-            class="bottom-nav__item">
-            <i [class]="item.icon + ' bottom-nav__icon'"></i>
-            <span class="bottom-nav__label">{{ item.label }}</span>
-          </a>
-        }
-      }
+      <!-- Menú (Hamburguesa) -->
+      <button class="bottom-nav__item" (click)="mobileSidebarVisible.set(true)">
+        <i class="pi pi-bars bottom-nav__icon"></i>
+        <span class="bottom-nav__label">Menú</span>
+      </button>
+
+      <!-- Mis Reservas -->
+      <button class="bottom-nav__item" (click)="bookingsUiService.openBookingsDialog()">
+        <i class="pi pi-calendar bottom-nav__icon"></i>
+        <span class="bottom-nav__label">Reservas</span>
+      </button>
+
+      <!-- Mi App (Centro) -->
+      <a routerLink="/dashboard" 
+         routerLinkActive="bottom-nav__item--active"
+         [routerLinkActiveOptions]="{ exact: true }"
+         class="bottom-nav__item bottom-nav__item--center">
+        <div class="bottom-nav__center-outer">
+          <div class="bottom-nav__center-inner">
+            <i class="pi pi-home"></i>
+          </div>
+        </div>
+        <span class="bottom-nav__label">Mi App</span>
+      </a>
+
+      <!-- Admin (Condicional) -->
       @if (isAdmin()) {
         <a routerLink="/admin" class="bottom-nav__item bottom-nav__item--admin">
           <i class="pi pi-shield bottom-nav__icon"></i>
           <span class="bottom-nav__label">Admin</span>
         </a>
+      } @else {
+        <!-- Website link for non-admins to keep 5 items balance? -->
+        <a routerLink="/" class="bottom-nav__item">
+          <i class="pi pi-globe bottom-nav__icon"></i>
+          <span class="bottom-nav__label">Web</span>
+        </a>
       }
-      <a routerLink="/" class="bottom-nav__item bottom-nav__item--website">
-        <i class="pi pi-globe bottom-nav__icon"></i>
-        <span class="bottom-nav__label">Website</span>
-      </a>
+
+      <!-- Log out -->
       <button class="bottom-nav__item bottom-nav__item--logout" (click)="logout()">
         <i class="pi pi-sign-out bottom-nav__icon"></i>
         <span class="bottom-nav__label">Salir</span>

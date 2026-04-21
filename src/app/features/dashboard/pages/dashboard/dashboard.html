@@ -150,6 +150,63 @@
       </div>
     </div>
 
+    <!-- Módulo de Asistencia (Cita Inmediata) -->
+    @if (nextBooking()) {
+      <div class="mx-4 mb-6">
+        <h2 class="text-[14px] font-black uppercase tracking-[0.2em] text-black/90 mb-4 px-1">Check-In</h2>
+        
+        <div class="attendance-module rounded-2xl border border-black/10 overflow-hidden bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-1.5 h-6 bg-red-500 rounded-full"></div>
+              <div>
+                <h3 class="text-[14px] font-black uppercase tracking-widest text-black">Próxima Clase</h3>
+                <p class="text-[11px] font-bold text-black/35 uppercase tracking-wide">{{ nextBooking().fullDateFormatted }}</p>
+              </div>
+            </div>
+
+            <div class="bg-black/[0.03] border border-black/5 rounded-2xl p-4 mb-5">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="text-[18px] font-black uppercase tracking-tight text-[#0a0a0a] mb-1">
+                    {{ nextBooking().class_name }}
+                  </div>
+                  <div class="flex items-center gap-2 text-[12px] font-bold text-black/40">
+                    <span>{{ nextBooking().coach_name }}</span>
+                    <span class="w-1 h-1 rounded-full bg-black/20"></span>
+                    <span>Cama {{ nextBooking().bed_numbers?.join(', ') }}</span>
+                  </div>
+                </div>
+                <div class="bg-[#0a0a0a] text-white px-3 py-1.5 rounded-xl text-[12px] font-black shadow-[0_4px_12px_rgba(0,0,0,0.2)]">
+                  {{ nextBooking().timeFormatted }}
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <button (click)="onMarkAttendance('attended')"
+                      [disabled]="markingAttendance()"
+                      class="attendance-btn attendance-btn--check flex items-center justify-center gap-2 rounded-xl py-4 transition-all">
+                @if (markingAttendance()) {
+                  <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                } @else {
+                  <i class="pi pi-check text-[14px]"></i>
+                  <span class="text-[12px] font-black uppercase tracking-widest">¡Asistí!</span>
+                }
+              </button>
+
+              <button (click)="onMarkAttendance('missed')"
+                      [disabled]="markingAttendance()"
+                      class="attendance-btn attendance-btn--x flex items-center justify-center gap-2 rounded-xl py-4 transition-all">
+                <i class="pi pi-times text-[14px]"></i>
+                <span class="text-[12px] font-black uppercase tracking-widest">No pude ir</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Gift Card Button -->
     <div class="px-4">
       <button (click)="openGiftcardDialog()"
@@ -376,10 +433,10 @@
           @for (day of weekDays; track $index) {
             <div class="flex flex-col items-center gap-1.5">
               <div class="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                   [ngClass]="weekAttended[$index]
+                   [ngClass]="weekAttended()[$index]
                      ? 'bg-[#0a0a0a] shadow-[0_4px_10px_rgba(0,0,0,0.25)]'
                      : 'border border-black/10 bg-white'">
-                @if (weekAttended[$index]) {
+                @if (weekAttended()[$index]) {
                   <i class="pi pi-check text-white text-[11px]"></i>
                 }
               </div>
