@@ -1,13 +1,12 @@
 import { Component, model, signal, inject, effect, Injector, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
-import { NgClass } from '@angular/common';
 import { PackagesService, Package } from '../../../features/landing/services/packages.service';
 
 @Component({
   selector: 'app-packages-modal',
   standalone: true,
-  imports: [NgClass],
+  imports: [],
   templateUrl: './packages-modal.html',
   styleUrl: './packages-modal.scss'
 })
