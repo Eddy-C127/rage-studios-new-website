@@ -90,10 +90,8 @@ export class DashboardLayout implements OnInit, OnDestroy {
     this.showNotifications.set(!this.showNotifications());
   }
 
-  async reload() {
-    const currentUrl = this.router.url;
-    await this.router.navigateByUrl('/', { skipLocationChange: true });
-    await this.router.navigate([currentUrl]);
+  reload() {
+    window.location.reload();
   }
 
   openInstallDialog() {
