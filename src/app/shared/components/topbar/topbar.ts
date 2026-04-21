@@ -120,12 +120,12 @@ export class Topbar implements OnInit, OnDestroy {
   
   private rightNavItemsLoggedIn: NavItem[] = [
     { label: 'Coaches', sectionId: 'coaches', action: 'scroll' },
-    { label: 'Mi Cuenta', routerLink: '/mi-cuenta', action: 'route' }
+    { label: 'Mi Cuenta', routerLink: '/dashboard', action: 'route' }
   ];
   
   private rightNavItemsAdmin: NavItem[] = [
     { label: 'Admin', routerLink: '/admin', action: 'route' },
-    { label: 'Mi Cuenta', routerLink: '/mi-cuenta', action: 'route' }
+    { label: 'Mi Cuenta', routerLink: '/dashboard', action: 'route' }
   ];
   
   ngOnInit() {

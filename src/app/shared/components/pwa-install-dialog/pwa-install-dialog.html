@@ -1,0 +1,107 @@
+<!-- ── iOS Safari install tutorial ── -->
+@if (show() && isIos()) {
+  <div class="ath-overlay" (click)="onOverlayClick($event)">
+
+    <!-- Sheet principal -->
+    <div class="ath-sheet" [class.ath-sheet--visible]="sheetVisible()">
+
+      <!-- Handle -->
+      <div class="ath-handle"></div>
+
+      <!-- App info -->
+      <div class="ath-app-row">
+        <div class="ath-app-icon">
+          <img src="/icons/icon-96x96.png" alt="Rage Studios" width="52" height="52" />
+        </div>
+        <div class="ath-app-info">
+          <span class="ath-app-name">Rage Studios</span>
+          <span class="ath-app-url">ragestudios.app</span>
+        </div>
+      </div>
+
+      <p class="ath-headline">Agrega la app a tu pantalla de inicio</p>
+
+      <!-- Steps -->
+      <ol class="ath-steps">
+        <li class="ath-step">
+          <div class="ath-step-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M11 2v13M6 7l5-5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 15v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span>Toca el botón <strong>Compartir</strong> en Safari</span>
+        </li>
+        <li class="ath-step">
+          <div class="ath-step-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <rect x="3" y="3" width="16" height="16" rx="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M11 8v6M8 11h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span>Selecciona <strong>Añadir a inicio</strong></span>
+        </li>
+        <li class="ath-step">
+          <div class="ath-step-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M4 11l5 5L18 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span>Pulsa <strong>Agregar</strong> para confirmar</span>
+        </li>
+      </ol>
+
+      <!-- Botones -->
+      <div class="ath-actions">
+        <button class="ath-btn-dismiss" (click)="dismiss()">No mostrar más</button>
+        <button class="ath-btn-ok" (click)="understood()">Entendido</button>
+      </div>
+    </div>
+
+    <!-- Flecha animada apuntando al botón Share de Safari (fija en bottom-center) -->
+    <div class="ath-arrow-wrap" [class.ath-arrow-wrap--visible]="arrowVisible()">
+      <div class="ath-arrow-label">Toca aquí</div>
+      <div class="ath-arrow">
+        <svg width="28" height="36" viewBox="0 0 28 36" fill="none">
+          <path d="M14 2 L14 28" stroke="white" stroke-width="3" stroke-linecap="round"/>
+          <path d="M5 20 L14 30 L23 20" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+  </div>
+}
+
+<!-- ── Android / Desktop: prompt nativo ── -->
+@if (show() && !isIos()) {
+  <div class="ath-overlay" (click)="onOverlayClick($event)">
+    <div class="ath-sheet ath-sheet--android" [class.ath-sheet--visible]="sheetVisible()">
+
+      <div class="ath-handle"></div>
+
+      <div class="ath-app-row">
+        <div class="ath-app-icon">
+          <img src="/icons/icon-96x96.png" alt="Rage Studios" width="52" height="52" />
+        </div>
+        <div class="ath-app-info">
+          <span class="ath-app-name">Rage Studios</span>
+          <span class="ath-app-url">ragestudios.app</span>
+        </div>
+      </div>
+
+      <p class="ath-headline">Instala la app para acceso rápido</p>
+
+      <ul class="ath-benefits">
+        <li><i class="pi pi-bolt"></i><span>Acceso sin abrir el navegador</span></li>
+        <li><i class="pi pi-bell"></i><span>Notificaciones de tus clases</span></li>
+        <li><i class="pi pi-wifi"></i><span>Funciona sin conexión</span></li>
+      </ul>
+
+      <div class="ath-actions">
+        <button class="ath-btn-dismiss" (click)="dismiss()">Ahora no</button>
+        <button class="ath-btn-ok" (click)="install()">Instalar</button>
+      </div>
+
+    </div>
+  </div>
+}

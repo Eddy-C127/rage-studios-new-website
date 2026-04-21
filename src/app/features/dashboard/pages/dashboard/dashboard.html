@@ -1,0 +1,499 @@
+<p-toast />
+<div class="dashboard-page bg-white min-h-screen text-[#0a0a0a] font-mono pb-24 pt-8 md:pt-12 overflow-x-hidden">
+
+
+  <div class="max-w-md mx-auto w-full space-y-7">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6">
+      <h2 class="text-[11px] font-bold tracking-[0.28em] uppercase opacity-40">Rage Studios</h2>
+      <div class="flex items-center gap-2">
+        <!-- Descargar App -->
+        <button
+          (click)="openInstallDialog()"
+          class="w-9 h-9 rounded-full border border-black/12 shadow-sm flex items-center justify-center bg-white transition-all active:scale-95"
+          title="Descargar App">
+          <i class="pi pi-download text-black/50 text-sm"></i>
+        </button>
+        <!-- Recargar -->
+        <button
+          (click)="reload()"
+          class="w-9 h-9 rounded-full border border-black/12 shadow-sm flex items-center justify-center bg-white transition-all active:scale-95"
+          title="Recargar">
+          <i class="pi pi-refresh text-black/50 text-sm"></i>
+        </button>
+        <!-- Notificaciones -->
+        <div class="relative">
+        <button
+          (click)="toggleNotifications()"
+          class="w-9 h-9 rounded-full border border-black/12 shadow-sm flex items-center justify-center relative bg-white transition-all active:scale-95"
+          [class.bg-gray-50]="showNotifications()">
+          <i class="pi pi-bell text-black/50 text-sm"></i>
+          <!-- Badge de Notificaciones Pendientes (Rediseñado para ser más visible) -->
+          @if (unreadCount() > 0) {
+            <div class="absolute -top-1 -right-1 w-[18px] h-[18px] bg-[#ff3b30] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-pulse-slow">
+              {{ unreadCount() > 9 ? '+9' : unreadCount() }}
+            </div>
+          }
+        </button>
+
+        <!-- Panel de Notificaciones (Overlay) -->
+        @if (showNotifications()) {
+          <div class="absolute right-0 mt-3 w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-black/5 z-[100] overflow-hidden origin-top-right animate-scale-in">
+            <div class="px-5 py-4 border-b border-black/5 flex justify-between items-center bg-gray-50/50">
+              <span class="text-xs font-bold uppercase tracking-wider text-black/60">Notificaciones</span>
+              <button (click)="refreshNotifications()" class="text-black/40 hover:text-black/80 transition-colors">
+                <i class="pi pi-refresh text-xs"></i>
+              </button>
+            </div>
+
+            <div class="max-h-[350px] overflow-y-auto">
+              @if (notificationHistory().length === 0) {
+                <div class="py-12 px-6 text-center">
+                  <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="pi pi-bell-slash text-black/20"></i>
+                  </div>
+                  <p class="text-sm text-black/40 italic">No tienes notificaciones aún</p>
+                </div>
+              } @else {
+                <div class="flex flex-col">
+                  @for (notif of notificationHistory(); track notif.id) {
+                    <div class="px-5 py-4 border-b border-black/[0.03] hover:bg-black/[0.02] transition-colors cursor-pointer group">
+                      <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center shrink-0">
+                          <i class="pi" [class]="notif.notification_type === 'cancellation_user' ? 'pi-times text-red-500' : 'pi-calendar text-blue-500'" style="font-size: 0.75rem"></i>
+                        </div>
+                        <div class="flex flex-col gap-0.5">
+                          <span class="text-[13px] font-bold text-black/80 leading-tight">{{ notif.message_payload.title }}</span>
+                          <p class="text-[12px] text-black/50 leading-snug">{{ notif.message_payload.body }}</p>
+                          <span class="text-[10px] text-black/30 mt-1 uppercase font-medium tracking-tight">
+                            {{ notif.sent_at | date:'d MMM, h:mm a' }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="px-5 py-3 bg-black/5 text-center">
+              <button (click)="showNotifications.set(false)" class="text-[11px] font-bold uppercase tracking-widest text-black/40 hover:text-black/80 transition-colors">Cerrar</button>
+            </div>
+          </div>
+        }
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Card -->
+    <div class="mx-4">
+      <div class="rounded-2xl overflow-hidden border border-black/10 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.18)]">
+
+        <div class="bg-[#0a0a0a] px-5 pt-5 pb-6">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <div class="text-[9px] text-white/40 font-bold tracking-[0.22em] uppercase mb-1.5">Bienvenida de vuelta</div>
+              <div class="text-[26px] font-black uppercase tracking-tight leading-none text-white">
+                Hola, {{ displayName }}
+              </div>
+            </div>
+            <div class="bg-red-500 rounded-md px-2.5 py-1 text-[8px] font-black tracking-[0.18em] uppercase text-white flex-shrink-0 shadow-[0_4px_12px_rgba(239,68,68,0.4)]">
+              {{ membership() }}
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 border border-white/10 rounded-full px-3 py-1.5 bg-white/5">
+              <i class="pi pi-bolt text-red-400 text-xs"></i>
+              <span class="text-[11px] font-bold text-white/70">Racha: <span class="text-red-400">{{ streak() }} días</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Credits accordion trigger -->
+        <div class="bg-white border-t border-black/8">
+
+          <!-- Urgent expiry alerts -->
+          @if (urgentBatches().length > 0) {
+            <div class="px-5 pt-3 flex flex-col gap-1.5">
+              @for (b of urgentBatches(); track b.id) {
+                <div class="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                  <div class="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0 animate-pulse"></div>
+                  <span class="text-[9px] font-black text-red-600 tracking-wide uppercase leading-tight flex-1">
+                    {{ batchLabel(b) }} — vence en {{ daysUntil(b.expiration_date!) }} día{{ daysUntil(b.expiration_date!) === 1 ? '' : 's' }}
+                  </span>
+                  <span class="text-[9px] font-black text-red-500 flex-shrink-0">{{ b.credits_remaining }} cls</span>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Toggle row -->
+          <button (click)="toggleCredits()"
+                  class="w-full flex items-center justify-between px-5 py-4 transition-colors hover:bg-black/[0.02] active:bg-black/[0.04]">
+            <div class="flex items-center gap-3">
+              <div class="text-[9px] text-black/40 font-bold tracking-[0.16em] uppercase">Créditos</div>
+              <!-- Pip bars -->
+              <div class="flex items-center gap-1">
+                @for (item of [1,2,3,4,5]; track $index) {
+                  <div class="w-5 h-1.5 rounded-full transition-all duration-300"
+                       [ngClass]="$index < creditsService.totalCredits() ? 'bg-[#0a0a0a]' : 'bg-black/10'"></div>
+                }
+              </div>
+              <span class="text-[11px] font-black"
+                    [ngClass]="creditsService.totalCredits() > 0 ? 'text-[#0a0a0a]' : 'text-red-500'">
+                {{ creditsService.getCreditsDisplay() }} cls
+              </span>
+            </div>
+            <!-- Chevron -->
+            <i class="pi pi-chevron-down text-black/25 text-[10px] transition-transform duration-300"
+               [ngClass]="creditsOpen() ? 'rotate-180' : ''"></i>
+          </button>
+
+          <!-- Accordion body -->
+          <div class="overflow-hidden transition-all duration-400 ease-in-out"
+               [style.max-height]="creditsOpen() ? '400px' : '0px'"
+               [style.opacity]="creditsOpen() ? '1' : '0'">
+            <div class="px-5 pb-5">
+
+              @if (loadingBatches()) {
+                <div class="flex items-center gap-2 py-3">
+                  <div class="w-3.5 h-3.5 rounded-full border-2 border-black/15 border-t-[#0a0a0a] animate-spin"></div>
+                  <span class="text-[9px] text-black/35 font-bold uppercase tracking-wide">Cargando paquetes…</span>
+                </div>
+              } @else if (activeBatches().length === 0) {
+                <div class="text-center py-4">
+                  <p class="text-[9px] text-black/30 font-bold uppercase tracking-wide mb-3">Sin créditos activos</p>
+                  <button (click)="openPackagesModal()"
+                          class="bg-[#0a0a0a] text-white rounded-lg py-2 px-4 text-[8.5px] font-black uppercase tracking-wider">
+                    Comprar paquete
+                  </button>
+                </div>
+              } @else {
+                <div class="flex flex-col gap-2">
+                  @for (batch of activeBatches(); track batch.id) {
+                    <div class="rounded-xl border bg-white overflow-hidden"
+                         [ngClass]="daysUntil(batch.expiration_date ?? '') <= 7 && batch.expiration_date
+                           ? 'border-red-200 bg-red-50/40'
+                           : 'border-black/8'">
+                      <div class="flex items-center gap-3 px-3 py-2.5">
+
+                        <!-- Icon -->
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                             [ngClass]="batch.is_unlimited ? 'bg-red-500' : 'bg-[#0a0a0a]'">
+                          <i [class]="(batch.is_unlimited ? 'pi pi-infinity' : 'pi pi-ticket') + ' text-white text-[11px]'"></i>
+                        </div>
+
+                        <!-- Info -->
+                        <div class="flex-1 min-w-0">
+                          <div class="text-[10px] font-black text-[#0a0a0a] tracking-wide truncate">
+                            {{ batchLabel(batch) }}
+                          </div>
+                          <div class="text-[8.5px] text-black/40 font-bold mt-0.5">
+                            Vence: {{ batchExpiry(batch) }}
+                          </div>
+                        </div>
+
+                        <!-- Credits pill -->
+                        <div class="flex-shrink-0 flex flex-col items-end gap-0.5">
+                          <span class="text-[14px] font-black leading-none"
+                                [ngClass]="batch.is_unlimited ? 'text-red-500' : 'text-[#0a0a0a]'">
+                            {{ batch.is_unlimited ? '∞' : batch.credits_remaining }}
+                          </span>
+                          <span class="text-[7px] font-bold text-black/30 uppercase tracking-wider">clases</span>
+                        </div>
+
+                      </div>
+
+                      <!-- Expiry urgency bar -->
+                      @if (batch.expiration_date && daysUntil(batch.expiration_date) <= 7) {
+                        <div class="h-[2px] w-full bg-red-100">
+                          <div class="h-full bg-red-500 transition-all"
+                               [style.width]="(((7 - daysUntil(batch.expiration_date)) / 7) * 100) + '%'"></div>
+                        </div>
+                      }
+
+                    </div>
+                  }
+                </div>
+
+                <!-- Buy more CTA -->
+                <button (click)="openPackagesModal()"
+                        class="mt-3 w-full border border-black/10 rounded-xl py-2.5 text-[8.5px] font-black uppercase tracking-wider text-black/40 hover:text-black/70 hover:border-black/20 transition-all">
+                  + Comprar más créditos
+                </button>
+              }
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Gift Card Button -->
+    <div class="px-4">
+      <button (click)="openGiftcardDialog()"
+              class="relative w-full overflow-hidden flex items-center gap-4 px-5 py-4 rounded-2xl transition-all active:scale-[0.98]"
+              style="background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%); box-shadow: 0 8px 32px -4px rgba(0,0,0,0.35);">
+        <!-- Shimmer layer -->
+        <div class="absolute inset-0 opacity-20"
+             style="background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%); animation: shimmer 3s infinite;"></div>
+        <!-- Decorative circles -->
+        <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full opacity-10" style="background: radial-gradient(circle, #EF4444, transparent)"></div>
+        <div class="absolute -right-1 -bottom-4 w-14 h-14 rounded-full opacity-10" style="background: radial-gradient(circle, #ffffff, transparent)"></div>
+        <!-- Icon -->
+        <div class="relative flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+             style="background: linear-gradient(135deg, #EF4444, #dc2626); box-shadow: 0 4px 14px rgba(239,68,68,0.5);">
+          <i class="pi pi-gift text-white text-[15px]"></i>
+        </div>
+        <!-- Text -->
+        <div class="relative flex flex-col items-start gap-0.5">
+          <span class="text-[11px] font-black uppercase tracking-[0.2em] text-white">¿Tienes una Gift Card?</span>
+          <span class="text-[9px] font-bold text-white/45 tracking-wide">Canjea tu código y obtén créditos</span>
+        </div>
+        <!-- Arrow -->
+        <div class="relative ml-auto flex-shrink-0">
+          <i class="pi pi-chevron-right text-white/30 text-[11px]"></i>
+        </div>
+      </button>
+    </div>
+
+    <!-- Novedades -->
+    @if (news().length > 0) {
+      <div>
+        <div class="flex items-baseline px-4 mb-3">
+          <h3 class="text-[11px] font-black uppercase tracking-[0.2em]">Novedades</h3>
+        </div>
+        <div class="flex gap-3 overflow-x-auto px-4 pb-2 snap-x scrollbar-hide">
+          @for (n of news(); track n.id) {
+            <div class="snap-start min-w-[256px] rounded-2xl border border-black/10 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.10)] flex-shrink-0 cursor-pointer hover:shadow-[0_8px_28px_-4px_rgba(0,0,0,0.15)] transition-all overflow-hidden">
+              @if (n.image_url) {
+                <img [src]="n.image_url" [alt]="n.title" class="w-full h-28 object-cover" />
+              }
+              <div class="p-4">
+                @if (n.tag) {
+                  <div class="inline-block bg-red-500/8 border border-red-500/20 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-[0.16em] mb-3 text-red-500">
+                    {{ n.tag }}
+                  </div>
+                }
+                <div class="text-[13px] font-bold text-[#0a0a0a] leading-snug pr-2">{{ n.title }}</div>
+                <div class="text-[10px] text-black/40 mt-1 line-clamp-2 leading-snug">{{ n.body }}</div>
+                @if (n.link_url && n.link_label) {
+                  <div class="mt-3 flex items-center gap-1 text-[9px] font-black text-red-500 uppercase tracking-wide">
+                    {{ n.link_label }} <i class="pi pi-chevron-right text-[7px]"></i>
+                  </div>
+                } @else {
+                  <div class="mt-3 flex items-center gap-1 text-[9px] font-black text-red-500 uppercase tracking-wide">
+                    Ver más <i class="pi pi-chevron-right text-[7px]"></i>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Quick Actions -->
+    <div class="px-4">
+      <div class="grid grid-cols-4 gap-2.5">
+        @for (action of quickActions; track action.id) {
+          <button (click)="onActionClick(action)"
+                  class="group flex flex-col items-center gap-2.5 p-3 rounded-xl border border-black/10 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition-all active:scale-95 hover:shadow-[0_4px_16px_rgba(0,0,0,0.10)] hover:border-black/18">
+            <div class="w-10 h-10 rounded-xl bg-[#0a0a0a] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.25)] group-hover:scale-105 transition-transform">
+              <i [class]="action.icon + ' text-white text-sm'"></i>
+            </div>
+            <span class="text-[8.5px] font-bold text-black/45 text-center leading-tight tracking-wide uppercase">{{ action.label }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- ── MIS CLASES CON CALENDARIO ──────────────────────────── -->
+    <div>
+      <div class="flex items-center justify-between px-4 mb-4">
+        <div>
+          <h3 class="text-[11px] font-black uppercase tracking-[0.2em]">Mis Clases</h3>
+          <p class="text-[9px] text-black/35 font-bold mt-0.5 tracking-wide">Próximas reservaciones</p>
+        </div>
+        <span class="text-[9px] text-red-500 font-black uppercase tracking-widest cursor-pointer hover:opacity-70 transition-opacity"
+              (click)="onActionClick({route: '/dashboard/reservas'})">Ver todas →</span>
+      </div>
+
+      <!-- Day picker strip -->
+      <div class="flex gap-2 overflow-x-auto px-4 pb-2 scrollbar-hide snap-x">
+        @for (day of days(); track day.iso) {
+          <button
+            (click)="selectDay(day)"
+            class="flex-shrink-0 snap-start flex flex-col items-center gap-1 w-[52px] py-2.5 rounded-xl border transition-all"
+            [ngClass]="selectedDay()?.iso === day.iso
+              ? 'bg-[#0a0a0a] border-[#0a0a0a] shadow-[0_4px_12px_rgba(0,0,0,0.22)]'
+              : 'bg-white border-black/10 hover:border-black/20'">
+            <span class="text-[8px] font-black tracking-[0.14em] uppercase"
+                  [ngClass]="selectedDay()?.iso === day.iso ? 'text-white/50' : 'text-black/35'">
+              {{ day.label }}
+            </span>
+            <span class="text-[17px] font-black leading-none"
+                  [ngClass]="selectedDay()?.iso === day.iso ? 'text-white' : 'text-[#0a0a0a]'">
+              {{ day.num }}
+            </span>
+            <!-- Booking dot -->
+            @if (day.hasBooking) {
+              <div class="w-1.5 h-1.5 rounded-full"
+                   [ngClass]="selectedDay()?.iso === day.iso ? 'bg-red-400' : 'bg-red-500'"></div>
+            } @else {
+              <div class="w-1.5 h-1.5"></div>
+            }
+          </button>
+        }
+      </div>
+
+      <!-- Booking cards for selected day -->
+      <div class="px-4 mt-3">
+        @if (loadingBookings()) {
+          <div class="flex items-center gap-2 py-4">
+            <div class="w-4 h-4 rounded-full border-2 border-black/20 border-t-[#0a0a0a] animate-spin"></div>
+            <span class="text-[10px] text-black/35 font-bold uppercase tracking-wide">Cargando…</span>
+          </div>
+        } @else if (dayBookings().length > 0) {
+          <div class="flex flex-col gap-3">
+            @for (booking of dayBookings(); track booking.id) {
+              <div class="rounded-2xl border border-black/10 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.10)] overflow-hidden">
+                <!-- Acento izquierda -->
+                <div class="flex">
+                  <div class="w-[3px] bg-red-500 flex-shrink-0"></div>
+                  <div class="flex-1 p-4">
+
+                    <div class="flex items-start justify-between mb-3">
+                      <div>
+                        <div class="text-[13px] font-black uppercase tracking-wide leading-tight">{{ booking.name }}</div>
+                        <div class="text-[10px] text-black/40 font-bold mt-0.5">con {{ booking.coach }}</div>
+                      </div>
+                      <!-- Hora pill -->
+                      <div class="flex items-center gap-1 bg-black/[0.04] border border-black/8 rounded-full px-2.5 py-1 flex-shrink-0">
+                        <i class="pi pi-clock text-[8px] text-black/40"></i>
+                        <span class="text-[9px] font-black text-black/60">{{ booking.time }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Cama reformer -->
+                    <div class="flex items-center gap-1.5 mb-4">
+                      <div class="flex items-center gap-1 border border-black/8 rounded-lg px-2 py-1 bg-black/[0.02]">
+                        <i class="pi pi-bed text-[9px] text-black/35"></i>
+                        <span class="text-[9px] font-bold text-black/45">Cama {{ booking.bed }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Cancelar -->
+                    @if (booking.canCancel) {
+                      <button (click)="onCancelClass(booking)"
+                              class="w-full border border-red-500/25 text-red-500 rounded-lg py-2 text-[9px] font-black uppercase tracking-wider transition-all hover:bg-red-500/6 hover:border-red-500/50 disabled:opacity-40"
+                              [disabled]="cancellingId() === booking.id">
+                        @if (cancellingId() === booking.id) {
+                          Cancelando…
+                        } @else {
+                          Cancelar reserva
+                        }
+                      </button>
+                    } @else {
+                      <div class="w-full border border-black/8 rounded-lg py-2 text-[9px] font-bold text-black/30 uppercase tracking-wider text-center">
+                        Sin cancelación disponible
+                      </div>
+                    }
+
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="rounded-2xl border border-dashed border-black/12 p-6 text-center">
+            <div class="w-10 h-10 rounded-xl bg-black/[0.03] border border-black/8 flex items-center justify-center mx-auto mb-3">
+              <i class="pi pi-calendar text-black/25 text-sm"></i>
+            </div>
+            <p class="text-black/30 text-[10px] font-bold uppercase tracking-wide mb-3">Sin clases este día</p>
+            <button (click)="openBookingDialog()"
+                    class="bg-[#0a0a0a] text-white rounded-lg py-2 px-5 text-[9px] font-black uppercase tracking-wider shadow-[0_4px_12px_rgba(0,0,0,0.2)] transition-all hover:opacity-80">
+              Reservar ahora
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ── MI RACHA SEMANAL ─────────────────────────────────────── -->
+    <div class="mx-4">
+      <div class="rounded-2xl border border-black/10 bg-white shadow-[0_4px_20px_-4px_rgba(0,0,0,0.10)] p-5">
+
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-[11px] font-black uppercase tracking-[0.2em]">Mi Racha</h3>
+          <div class="flex items-center gap-1 text-[10px] font-black text-red-500">
+            <i class="pi pi-bolt text-[10px]"></i>
+            {{ streak() }} días
+          </div>
+        </div>
+
+        <div class="text-[8px] font-bold tracking-[0.18em] uppercase text-black/30 mb-3">Esta semana</div>
+
+        <div class="grid grid-cols-7 gap-1.5">
+          @for (day of weekDays; track $index) {
+            <div class="flex flex-col items-center gap-1.5">
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                   [ngClass]="weekAttended[$index]
+                     ? 'bg-[#0a0a0a] shadow-[0_4px_10px_rgba(0,0,0,0.25)]'
+                     : 'border border-black/10 bg-white'">
+                @if (weekAttended[$index]) {
+                  <i class="pi pi-check text-white text-[11px]"></i>
+                }
+              </div>
+              <span class="text-[8px] font-bold text-black/35 tracking-wider">{{ day }}</span>
+            </div>
+          }
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── LOGROS con glow ──────────────────────────────────────── -->
+    <div>
+      <div class="flex items-baseline px-4 mb-3">
+        <h3 class="text-[11px] font-black uppercase tracking-[0.2em]">Logros</h3>
+      </div>
+      <div class="flex gap-3 overflow-x-auto px-4 pb-6 scrollbar-hide">
+        @for (b of badges; track b.id) {
+          <div class="flex flex-col items-center gap-2 min-w-[72px] flex-shrink-0">
+
+            <!-- Badge icon con glow -->
+            <div class="badge-wrap relative w-14 h-14 flex items-center justify-center"
+                 [ngClass]="b.unlocked ? '' : 'opacity-35 grayscale'">
+              <!-- Glow layer -->
+              @if (b.unlocked) {
+                <div class="absolute inset-0 rounded-2xl blur-md opacity-30 transition-opacity"
+                     [style.background]="'rgb(' + b.glow + ')'"></div>
+              }
+              <!-- Card -->
+              <div class="relative w-14 h-14 rounded-2xl border flex items-center justify-center text-2xl shadow-[0_4px_12px_rgba(0,0,0,0.10)] bg-white"
+                   [style.border-color]="b.unlocked ? 'rgba(' + b.glow + ',0.25)' : 'rgba(0,0,0,0.08)'">
+                {{ b.icon }}
+                @if (!b.unlocked) {
+                  <div class="absolute inset-0 rounded-2xl flex items-center justify-center">
+                    <i class="pi pi-lock text-[10px] text-black/25"></i>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <span class="text-[7.5px] font-bold text-center leading-tight tracking-wider uppercase w-16"
+                  [ngClass]="b.unlocked ? 'text-black/55' : 'text-black/22'">
+              {{ b.label }}
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+</div>

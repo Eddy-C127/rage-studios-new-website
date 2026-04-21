@@ -1,4 +1,5 @@
 import { Component, model, output, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -31,6 +32,7 @@ export class LoginDialog {
   private fb = inject(FormBuilder);
   private supabaseService = inject(SupabaseService);
   private messageService = inject(MessageService);
+  private router = inject(Router);
   
   loginForm: FormGroup;
   isLoading = false;
@@ -60,18 +62,22 @@ export class LoginDialog {
     const { email, password } = this.loginForm.value;
     
     try {
-      await this.supabaseService.signIn(email, password);
-      
+      const data = await this.supabaseService.signIn(email, password);
+
+      const profile = data?.user ? await this.supabaseService.getProfile(data.user.id) : null;
+      const isAdmin = profile?.role === 'admin';
+
       this.messageService.add({
         severity: 'success',
         summary: 'Éxito',
         detail: 'Sesión iniciada correctamente',
         life: 3000
       });
-      
+
       setTimeout(() => {
         this.visible.set(false);
         this.loginForm.reset();
+        this.router.navigate([isAdmin ? '/admin' : '/dashboard']);
       }, 500);
       
     } catch (error: any) {

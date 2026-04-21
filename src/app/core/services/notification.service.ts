@@ -70,6 +70,16 @@ export class NotificationService implements OnDestroy {
   private readonly _isLoading = signal(false);
   private readonly _serviceWorkerReady = signal(false);
 
+  // ── IN-APP NOTIFICATIONS ──────────────────────────────────────────
+  private readonly _history = signal<NotificationSchedule[]>([]);
+  readonly history = this._history.asReadonly();
+  private readonly _readIds = signal<Set<string>>(new Set());
+
+  readonly unreadNotificationsCount = computed(() => {
+    const read = this._readIds();
+    return this._history().filter(n => !read.has(n.id)).length;
+  });
+
   // 📊 Public Computed Properties
   readonly permissionStatus = this._permissionStatus.asReadonly();
   readonly pushToken = this._pushToken.asReadonly();

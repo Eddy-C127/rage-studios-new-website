@@ -1,0 +1,128 @@
+@if (visible()) {
+  <div class="pkg-overlay" (click)="onOverlayClick($event)">
+
+    <!-- ── Sheet ── -->
+    <div class="pkg-sheet" [class.pkg-sheet--visible]="sheetVisible()">
+
+      <!-- Handle -->
+      <div class="pkg-handle"></div>
+
+      <!-- Header -->
+      <div class="pkg-header">
+        <div>
+          <p class="pkg-eyebrow">Rage Studios</p>
+          <h2 class="pkg-title">Elige tu paquete</h2>
+        </div>
+        <button class="pkg-close" (click)="close()">
+          <i class="pi pi-times text-[11px]"></i>
+        </button>
+      </div>
+
+      <!-- ── Package list ── -->
+      <div class="pkg-list">
+
+        @if (isLoading()) {
+          @for (s of [1,2,3]; track s) {
+            <div class="pkg-skeleton"></div>
+          }
+        } @else {
+          @for (pkg of packages(); track pkg.id) {
+            <button
+              class="pkg-card"
+              [class.pkg-card--selected]="selected()?.id === pkg.id"
+              [class.pkg-card--unlimited]="pkg.is_unlimited"
+              (click)="selectPackage(pkg)">
+
+              <!-- Selection dot -->
+              <div class="pkg-radio">
+                @if (selected()?.id === pkg.id) {
+                  <div class="pkg-radio-dot"></div>
+                }
+              </div>
+
+              <!-- Info -->
+              <div class="pkg-card-body">
+                <div class="pkg-card-top">
+                  <span class="pkg-name">{{ pkg.title }}</span>
+                  @if (pkg.is_unlimited) {
+                    <span class="pkg-badge-unlimited">ÉLITE</span>
+                  }
+                </div>
+
+                <div class="pkg-card-meta">
+                  <span class="pkg-meta-item">
+                    <i class="pi pi-bolt text-[8px]"></i>
+                    {{ getClassesText(pkg) }}
+                  </span>
+                  <span class="pkg-sep">·</span>
+                  <span class="pkg-meta-item">
+                    <i class="pi pi-clock text-[8px]"></i>
+                    {{ getValidityText(pkg) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Price + policies -->
+              <div class="pkg-card-right">
+                <span class="pkg-price">${{ pkg.price }}</span>
+                <span class="pkg-currency">MXN</span>
+                <button class="pkg-info-btn" (click)="openPolicies(pkg, $event)">
+                  <i class="pi pi-info-circle text-[11px]"></i>
+                </button>
+              </div>
+
+              <!-- Selected glow accent -->
+              @if (selected()?.id === pkg.id) {
+                <div class="pkg-card-accent"></div>
+              }
+
+            </button>
+          }
+        }
+
+      </div>
+
+      <!-- ── Policies inline panel ── -->
+      @if (showPolicies() && selected()) {
+        <div class="pkg-policies">
+          <div class="pkg-policies-header">
+            <span class="pkg-policies-title">Políticas · {{ selected()!.title }}</span>
+            <button (click)="closePolicies()" class="pkg-policies-close">
+              <i class="pi pi-times text-[10px]"></i>
+            </button>
+          </div>
+          <ul class="pkg-policies-list">
+            @for (p of selected()!.policies; track $index) {
+              <li>{{ p }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- ── CTA ── -->
+      <div class="pkg-footer">
+        @if (selected()) {
+          <div class="pkg-footer-summary">
+            <span class="pkg-footer-label">{{ selected()!.title }}</span>
+            <span class="pkg-footer-price">${{ selected()!.price }} MXN</span>
+          </div>
+        } @else {
+          <p class="pkg-footer-hint">Selecciona un paquete para continuar</p>
+        }
+
+        <button
+          class="pkg-cta"
+          [class.pkg-cta--active]="selected() !== null"
+          [disabled]="selected() === null"
+          (click)="proceed()">
+          @if (selected()) {
+            Ir a pagar <i class="pi pi-arrow-right text-[11px] ml-1.5"></i>
+          } @else {
+            Selecciona un paquete
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

@@ -75,6 +75,11 @@ export class AdminLayout {
       label: 'Excepciones',
       icon: 'pi pi-exclamation-circle',
       routerLink: '/admin/excepciones',
+    },
+    {
+      label: 'Noticias',
+      icon: 'pi pi-megaphone',
+      routerLink: '/admin/noticias',
     }
   ];
   

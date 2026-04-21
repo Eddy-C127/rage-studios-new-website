@@ -1,0 +1,191 @@
+<p-toast />
+<p-confirmDialog />
+
+<div class="admin-noticias p-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-900 mb-1">Noticias y Novedades</h2>
+      <p class="text-gray-600">Publica anuncios que aparecerán en el dashboard de los clientes</p>
+    </div>
+    <p-button label="Nueva noticia" icon="pi pi-plus" size="large" (onClick)="openCreate()" />
+  </div>
+
+  <!-- Search bar -->
+  <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
+    <p-iconfield>
+      <p-inputIcon class="pi pi-search" />
+      <input
+        type="text"
+        pInputText
+        [ngModel]="searchText()"
+        (ngModelChange)="searchText.set($event)"
+        placeholder="Buscar por título o etiqueta..."
+        class="w-full md:w-80" />
+    </p-iconfield>
+  </div>
+
+  <!-- Empty state -->
+  @if (!loading() && filteredNews.length === 0) {
+    <div class="text-center py-16">
+      <i class="pi pi-megaphone text-5xl text-gray-300 mb-4"></i>
+      <p class="text-gray-500 text-lg">No hay noticias para mostrar</p>
+      <p class="text-gray-400 text-sm mt-1">Crea la primera noticia con el botón de arriba</p>
+    </div>
+  } @else {
+
+    <!-- MOBILE: Card layout -->
+    <div class="block md:hidden">
+      @if (loading()) {
+        @for (item of skeletonData; track $index) {
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+            <p-skeleton width="70%" height="1.2rem" class="mb-2" />
+            <p-skeleton width="40%" height="0.9rem" class="mb-3" />
+            <div class="grid grid-cols-2 gap-2">
+              <p-skeleton width="100%" height="0.9rem" />
+              <p-skeleton width="100%" height="0.9rem" />
+            </div>
+          </div>
+        }
+      } @else {
+        @for (item of paginatedNews; track item.id) {
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start mb-3">
+              <div class="flex-1 min-w-0 mr-3">
+                <h3 class="font-semibold text-gray-900 truncate">{{ item.title }}</h3>
+                @if (item.tag) {
+                  <span class="text-xs text-gray-500">{{ item.tag }}</span>
+                }
+              </div>
+              <p-tag [value]="getStatusLabel(item)" [severity]="getStatusSeverity(item)" [rounded]="true" />
+            </div>
+
+            @if (item.image_url) {
+              <img [src]="item.image_url" alt="Preview" class="w-full h-28 object-cover rounded-lg mb-3" />
+            }
+
+            <p class="text-sm text-gray-600 line-clamp-2 mb-3">{{ item.body }}</p>
+
+            <div class="flex items-center justify-between border-t border-gray-100 pt-3">
+              <p-tag
+                [value]="item.is_active ? 'Activa' : 'Inactiva'"
+                [severity]="item.is_active ? 'success' : 'secondary'"
+                [rounded]="true" />
+              <div class="flex gap-2">
+                <p-button icon="pi pi-pencil" severity="secondary" [outlined]="true" size="small" (onClick)="openEdit(item)" />
+                <p-button icon="pi pi-trash" severity="danger" [outlined]="true" size="small" (onClick)="confirmDelete(item)" />
+              </div>
+            </div>
+          </div>
+        }
+      }
+
+      @if (!loading() && filteredNews.length > 10) {
+        <div class="mt-6">
+          <p-paginator
+            [rows]="mobileRowsPerPage()"
+            [totalRecords]="filteredNews.length"
+            [rowsPerPageOptions]="[10, 20, 30]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords}"
+            (onPageChange)="onMobilePageChange($event)">
+          </p-paginator>
+        </div>
+      }
+    </div>
+
+    <!-- DESKTOP: Table layout -->
+    <div class="hidden md:block">
+      <p-table
+        [value]="loading() ? skeletonData : filteredNews"
+        [rows]="15"
+        [paginator]="true"
+        [rowHover]="true"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords}"
+        [rowsPerPageOptions]="[15, 25, 50]"
+        dataKey="id"
+        class="p-datatable-gridlines">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width:80px">Imagen</th>
+            <th pSortableColumn="title">Título <p-sortIcon field="title" /></th>
+            <th>Etiqueta</th>
+            <th pSortableColumn="created_at">Creada <p-sortIcon field="created_at" /></th>
+            <th>Estado</th>
+            <th>Publicada</th>
+            <th style="width:60px">Activa</th>
+            <th style="width:100px">Acciones</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-item>
+          @if (loading()) {
+            <tr>
+              <td><p-skeleton width="60px" height="40px" /></td>
+              <td><p-skeleton width="80%" /></td>
+              <td><p-skeleton width="60%" /></td>
+              <td><p-skeleton width="70%" /></td>
+              <td><p-skeleton width="70%" /></td>
+              <td><p-skeleton width="60%" /></td>
+              <td><p-skeleton width="40px" /></td>
+              <td><p-skeleton width="80px" /></td>
+            </tr>
+          } @else {
+            <tr>
+              <td>
+                @if (item.image_url) {
+                  <img [src]="item.image_url" alt="img" class="w-16 h-10 object-cover rounded-md" />
+                } @else {
+                  <div class="w-16 h-10 bg-gray-100 rounded-md flex items-center justify-center">
+                    <i class="pi pi-image text-gray-400 text-sm"></i>
+                  </div>
+                }
+              </td>
+              <td>
+                <div class="font-medium text-gray-900 max-w-xs truncate" [title]="item.title">{{ item.title }}</div>
+                <div class="text-xs text-gray-500 line-clamp-1 max-w-xs">{{ item.body }}</div>
+              </td>
+              <td>
+                @if (item.tag) {
+                  <span class="text-xs font-semibold bg-gray-100 text-gray-700 px-2 py-1 rounded-full">{{ item.tag }}</span>
+                } @else {
+                  <span class="text-gray-400">—</span>
+                }
+              </td>
+              <td class="text-sm text-gray-600">{{ item.created_at | date: 'dd/MM/yy' }}</td>
+              <td>
+                <p-tag [value]="getStatusLabel(item)" [severity]="getStatusSeverity(item)" [rounded]="true" />
+              </td>
+              <td class="text-sm text-gray-600">
+                @if (item.published_at) {
+                  {{ item.published_at | date: 'dd/MM/yy HH:mm' }}
+                } @else if (item.scheduled_at) {
+                  <span class="text-blue-600 text-xs">{{ item.scheduled_at | date: 'dd/MM/yy HH:mm' }}</span>
+                } @else {
+                  <span class="text-gray-400">—</span>
+                }
+              </td>
+              <td>
+                <p-toggleSwitch [ngModel]="item.is_active" (ngModelChange)="toggleActive(item)" />
+              </td>
+              <td>
+                <div class="flex gap-2">
+                  <p-button icon="pi pi-pencil" severity="secondary" [outlined]="true" size="small" (onClick)="openEdit(item)" pTooltip="Editar" tooltipPosition="top" />
+                  <p-button icon="pi pi-trash" severity="danger" [outlined]="true" size="small" (onClick)="confirmDelete(item)" pTooltip="Eliminar" tooltipPosition="top" />
+                </div>
+              </td>
+            </tr>
+          }
+        </ng-template>
+      </p-table>
+    </div>
+  }
+</div>
+
+<app-admin-news-dialog
+  [(visible)]="showDialog"
+  [editingItem]="editingItem()"
+  (success)="loadNews()" />

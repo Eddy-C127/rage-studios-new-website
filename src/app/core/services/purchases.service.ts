@@ -73,6 +73,7 @@ export class PurchasesService {
     this.isLoading.set(true);
     
     try {
+      const now = new Date().toISOString();
       const { data, error } = await this.supabaseService.client
         .from('credit_batches')
         .select(`
@@ -81,7 +82,9 @@ export class PurchasesService {
           purchase:purchases(*)
         `)
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .gt('credits_remaining', 0)
+        .or(`expiration_date.is.null,expiration_date.gt.${now}`)
+        .order('expiration_date', { ascending: true, nullsFirst: false });
       
       if (error) throw error;
       

@@ -22,6 +22,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { PaymentService } from '../../../../core/services/payment.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
+import { BookingUiService } from '../../../../core/services/booking-ui.service';
 import { MessageModule } from 'primeng/message';
 import { formatDateToLocalYYYYMMDD, parseLocalDate } from '../../../../core/functions/date-utils';
 
@@ -48,6 +49,7 @@ export class BookingDialog {
   visible = model<boolean>(false);
 
   private bookingService = inject(BookingService);
+  private bookingUiService = inject(BookingUiService);
   private creditsService = inject(CreditsService);
   private supabaseService = inject(SupabaseService);
   private paymentService = inject(PaymentService);
@@ -441,6 +443,9 @@ export class BookingDialog {
         
         // Refrescar créditos
         await this.creditsService.refreshCredits();
+
+        // 🔄 NOTIFICAR ÉXITO GLOBAL PARA REFRESCAR DASHBOARD
+        this.bookingUiService.notifyBookingSuccess();
         
         // 🚨 CRÍTICO: Mostrar éxito inmediatamente, procesar notificaciones en segundo plano
         this.messageService.add({

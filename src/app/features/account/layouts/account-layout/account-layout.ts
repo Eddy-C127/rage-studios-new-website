@@ -34,6 +34,11 @@ export class AccountLayout {
   
   menuItems: MenuItem[] = [
     {
+      label: 'Dashboard',
+      icon: 'pi pi-home',
+      routerLink: '/mi-cuenta/dashboard'
+    },
+    {
       label: 'Mi Perfil',
       icon: 'pi pi-user',
       routerLink: '/mi-cuenta/perfil'

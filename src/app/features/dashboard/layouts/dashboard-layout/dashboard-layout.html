@@ -1,0 +1,119 @@
+<div class="dashboard-shell">
+
+  <!-- ═══════════════════════════════════════════
+       DESKTOP SIDEBAR (md+)
+  ════════════════════════════════════════════ -->
+  @if (!isMobile()) {
+    <aside
+      class="sidebar"
+      [class.sidebar--expanded]="sidebarExpanded()"
+      (mouseenter)="sidebarExpanded.set(true)"
+      (mouseleave)="sidebarExpanded.set(false)">
+
+      <!-- Logo -->
+      <div class="sidebar__logo">
+        <span class="sidebar__logo-mark">RS</span>
+        <span class="sidebar__logo-label">RAGE STUDIOS</span>
+      </div>
+
+      <!-- Divider -->
+      <div class="sidebar__divider"></div>
+
+      <!-- Nav Items -->
+      <nav class="sidebar__nav">
+        @for (item of navItems; track item.route) {
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="sidebar__item--active"
+            [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+            class="sidebar__item">
+            <i [class]="item.icon + ' sidebar__item-icon'"></i>
+            <span class="sidebar__item-label">{{ item.label }}</span>
+          </a>
+        }
+      </nav>
+
+      <!-- Spacer -->
+      <div class="sidebar__spacer"></div>
+
+      <!-- Divider -->
+      <div class="sidebar__divider"></div>
+
+      <!-- Utility actions -->
+      <button class="sidebar__item" (click)="openInstallDialog()" title="Instalar App">
+        <i class="pi pi-download sidebar__item-icon"></i>
+        <span class="sidebar__item-label">Instalar App</span>
+      </button>
+      <button class="sidebar__item" (click)="reload()" title="Recargar">
+        <i class="pi pi-refresh sidebar__item-icon"></i>
+        <span class="sidebar__item-label">Recargar</span>
+      </button>
+
+      <!-- Logout -->
+      <button class="sidebar__item sidebar__item--logout" (click)="logout()">
+        <i class="pi pi-sign-out sidebar__item-icon"></i>
+        <span class="sidebar__item-label">Salir</span>
+      </button>
+
+    </aside>
+  }
+
+  <!-- ═══════════════════════════════════════════
+       MOBILE TOP HEADER (md-)
+  ════════════════════════════════════════════ -->
+  @if (isMobile()) {
+    <header class="mobile-topbar">
+      <span class="mobile-topbar__logo">RS</span>
+      <div class="mobile-topbar__actions">
+        <button class="mobile-topbar__btn" (click)="openInstallDialog()" title="Descargar App">
+          <i class="pi pi-download"></i>
+        </button>
+        <button class="mobile-topbar__btn" (click)="reload()" title="Recargar">
+          <i class="pi pi-refresh"></i>
+        </button>
+      </div>
+    </header>
+  }
+
+  <!-- ═══════════════════════════════════════════
+       MAIN CONTENT
+  ════════════════════════════════════════════ -->
+  <main class="dashboard-main" [class.dashboard-main--mobile]="isMobile()">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       MOBILE BOTTOM NAVIGATION
+  ════════════════════════════════════════════ -->
+  @if (isMobile()) {
+    <nav class="bottom-nav">
+      @for (item of bottomNavItems; track item.route) {
+        @if (item.route === '/dashboard/reservas') {
+          <button class="bottom-nav__item" (click)="bookingsUiService.openBookingsDialog()">
+            <i [class]="item.icon + ' bottom-nav__icon'"></i>
+            <span class="bottom-nav__label">{{ item.label }}</span>
+          </button>
+        } @else {
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="bottom-nav__item--active"
+            [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+            class="bottom-nav__item">
+            <i [class]="item.icon + ' bottom-nav__icon'"></i>
+            <span class="bottom-nav__label">{{ item.label }}</span>
+          </a>
+        }
+      }
+    </nav>
+  }
+
+</div>
+
+<!-- Shared modals across all dashboard pages -->
+<p-toast />
+<app-booking-dialog [(visible)]="bookingUiService.showBookingDialog"></app-booking-dialog>
+<app-bookings-dialog [(visible)]="bookingsUiService.showBookingsDialog"></app-bookings-dialog>
+<app-packages-modal [(visible)]="packagesUiService.showPackagesModal"></app-packages-modal>
+<app-giftcard-redeem-dialog [(visible)]="giftcardUiService.showGiftcardDialog"></app-giftcard-redeem-dialog>
+<app-pwa-install-dialog></app-pwa-install-dialog>
+

@@ -398,10 +398,13 @@ export class BookingService {
       return [];
     }
 
-    // Eliminar duplicados y retornar solo las fechas únicas
-    const uniqueDates = [...new Set(data?.map(booking => booking.session_date) || [])];
+    // Eliminar duplicados y retornar solo las fechas únicas (normalizadas a YYYY-MM-DD)
+    const uniqueDates = [...new Set(data?.map(booking => {
+      // Tomar solo la parte de la fecha si viene con tiempo (ISO) o espacios
+      return booking.session_date?.substring(0, 10);
+    }).filter(d => !!d) || [])];
 
-    console.log(`📊 [BookingService] Found ${uniqueDates.length} unique booking dates`);
+    console.log(`📊 [BookingService] Found ${uniqueDates.length} unique booking dates:`, uniqueDates);
 
     return uniqueDates;
   }

@@ -1,7 +1,11 @@
 <p-toast position="top-right" />
-<app-topbar />
-<main class="app-main">
+@if (showTopbar()) {
+  <app-topbar />
+}
+<main class="app-main" [class.app-main--no-topbar]="!showTopbar()">
   <router-outlet />
 </main>
-<app-social-speed-dial />
+@if (showTopbar()) {
+  <app-social-speed-dial />
+}
 <app-pwa-install-dialog />

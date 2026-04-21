@@ -1,5 +1,5 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { Topbar } from './shared/components/topbar/topbar';
@@ -8,6 +8,9 @@ import { SocialSpeedDial } from './shared/components/social-speed-dial/social-sp
 import { PwaInstallDialogComponent } from './shared/components/pwa-install-dialog/pwa-install-dialog';
 import { PwaInstallService } from './core/services/pwa-install.service';
 import { NotificationService } from './core/services/notification.service';
+import { filter } from 'rxjs/operators';
+
+const TOPBAR_HIDDEN_ROUTES = ['/dashboard', '/admin'];
 
 @Component({
   selector: 'app-root',
@@ -18,13 +21,21 @@ import { NotificationService } from './core/services/notification.service';
 })
 export class App implements OnInit {
   protected title = 'rage-studios';
+  protected showTopbar = signal(true);
+
+  private router = inject(Router);
   
   private readonly pwaInstallService = inject(PwaInstallService);
   private readonly notificationService = inject(NotificationService);
   
   ngOnInit(): void {
-    // PWA Install Service is initialized automatically via constructor
-    // Set up automatic install prompt detection for new users
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd)
+    ).subscribe((e: any) => {
+      const hidden = TOPBAR_HIDDEN_ROUTES.some(r => e.urlAfterRedirects.startsWith(r));
+      this.showTopbar.set(!hidden);
+    });
+
     this.setupAutoInstallPrompt();
     
     // 🔔 Notification Service initialization happens automatically via constructor

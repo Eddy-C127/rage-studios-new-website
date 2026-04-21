@@ -2,6 +2,11 @@
   position: relative;
   height: 100vh;
   width: 100%;
+
+  &--no-topbar {
+    height: 100vh;
+    padding-top: 0;
+  }
 }
 
 :host {

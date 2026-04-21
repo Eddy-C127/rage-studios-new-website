@@ -1,11 +1,13 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { landingGuard } from './core/guards/landing.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./features/landing/pages/landing/landing').then(m => m.Landing)
+    loadComponent: () => import('./features/landing/pages/landing/landing').then(m => m.Landing),
+    canActivate: [landingGuard]
   },
   { 
     path: 'checkout',
@@ -27,12 +29,17 @@ export const routes: Routes = [
   },
   {
     path: 'mi-cuenta',
-    loadComponent: () => import('./features/account/layouts/account-layout/account-layout').then(m => m.AccountLayout),
+    redirectTo: '/dashboard',
+    pathMatch: 'full'
+  },
+  {
+    path: 'dashboard',
+    loadComponent: () => import('./features/dashboard/layouts/dashboard-layout/dashboard-layout').then(m => m.DashboardLayout),
     canActivate: [authGuard],
     children: [
       {
         path: '',
-        loadComponent: () => import('./features/account/pages/account-dashboard/account-dashboard').then(m => m.AccountDashboard)
+        loadComponent: () => import('./features/dashboard/pages/dashboard/dashboard').then(m => m.DashboardComponent)
       },
       {
         path: 'perfil',
@@ -52,7 +59,7 @@ export const routes: Routes = [
       },
       {
         path: 'historial-creditos',
-       loadComponent: () => import('./features/account/pages/credit-history/credit-history').then(m => m.CreditHistory)
+        loadComponent: () => import('./features/account/pages/credit-history/credit-history').then(m => m.CreditHistory)
       }
     ]
   },
@@ -122,6 +129,10 @@ export const routes: Routes = [
       {
         path: 'excepciones',
         loadComponent: () => import('./features/admin/pages/admin-exceptions/admin-exceptions').then(m => m.AdminExceptions)
+      },
+      {
+        path: 'noticias',
+        loadComponent: () => import('./features/admin/pages/admin-noticias/admin-noticias').then(m => m.AdminNoticias)
       }
     ]
   },

@@ -92,16 +92,16 @@ export class Checkout implements OnInit {
     console.log('Session received:', session);
     
     if (session && session.sessionId) {
-      // Usar redirectToCheckout directamente
-      this.stripeService.redirectToCheckout({ sessionId: session.sessionId })
+      // Usar redirectToCheckout directamente con cast para evitar errores de compilación
+      (this.stripeService as any).redirectToCheckout({ sessionId: session.sessionId })
         .subscribe({
-          next: (result) => {
+          next: (result: any) => {
             console.log('Redirect result:', result);
             if (result && result.error) {
               throw new Error(result.error.message);
             }
           },
-          error: (err) => {
+          error: (err: any) => {
             console.error('Stripe redirect error:', err);
             this.messageService.add({
               severity: 'error',

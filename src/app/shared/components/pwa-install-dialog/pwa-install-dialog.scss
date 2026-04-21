@@ -1,0 +1,246 @@
+// ── Overlay ──────────────────────────────────────────────────────────
+.ath-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: none; // Only children are interactive
+}
+
+// ── Bottom Sheet ──────────────────────────────────────────────────────
+.ath-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 12px 24px 40px;
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.15);
+  pointer-events: all;
+
+  transform: translateY(100%);
+  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
+  font-family: 'Monoid', 'Courier New', monospace;
+
+  &--visible {
+    transform: translateY(0);
+  }
+}
+
+// ── Handle ────────────────────────────────────────────────────────────
+.ath-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.12);
+  margin: 0 auto 20px;
+}
+
+// ── App row ───────────────────────────────────────────────────────────
+.ath-app-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.ath-app-icon {
+  img {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: block;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.ath-app-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ath-app-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0a0a0a;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ath-app-url {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.38);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+// ── Headline ──────────────────────────────────────────────────────────
+.ath-headline {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0a0a0a;
+  margin: 0 0 20px;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
+// ── Steps (iOS) ───────────────────────────────────────────────────────
+.ath-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  counter-reset: step;
+}
+
+.ath-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  counter-increment: step;
+
+  span {
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.65);
+    line-height: 1.4;
+
+    strong {
+      color: #0a0a0a;
+      font-weight: 800;
+    }
+  }
+}
+
+.ath-step-icon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+// ── Benefits (Android) ────────────────────────────────────────────────
+.ath-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.65);
+
+    i {
+      color: #EF4444;
+      font-size: 15px;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+  }
+}
+
+// ── Actions ───────────────────────────────────────────────────────────
+.ath-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.ath-btn-dismiss {
+  flex: 1;
+  height: 46px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.45);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 200ms;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+}
+
+.ath-btn-ok {
+  flex: 2;
+  height: 46px;
+  border: none;
+  border-radius: 12px;
+  background: #0a0a0a;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  transition: opacity 200ms;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+// ── Arrow (iOS – apunta al Share button de Safari) ────────────────────
+.ath-arrow-wrap {
+  position: fixed;
+  bottom: 18px;          // justo sobre la barra de Safari
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms 600ms;
+
+  &--visible {
+    opacity: 1;
+  }
+}
+
+.ath-arrow-label {
+  background: #0a0a0a;
+  color: white;
+  font-family: 'Monoid', 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 20px;
+}
+
+.ath-arrow {
+  animation: ath-bounce 1.2s ease-in-out infinite;
+  color: #0a0a0a;
+
+  svg path {
+    stroke: #0a0a0a;
+  }
+}
+
+@keyframes ath-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(8px); }
+}

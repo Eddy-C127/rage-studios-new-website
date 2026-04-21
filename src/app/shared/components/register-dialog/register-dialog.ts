@@ -1,4 +1,5 @@
 import { Component, model, output, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -30,6 +31,7 @@ export class RegisterDialog {
   private fb = inject(FormBuilder);
   private supabaseService = inject(SupabaseService);
   private messageService = inject(MessageService);
+  private router = inject(Router);
   
   registerForm: FormGroup;
   isLoading = false;
@@ -105,12 +107,7 @@ export class RegisterDialog {
       setTimeout(() => {
         this.visible.set(false);
         this.registerForm.reset();
-        
-        /*
-        setTimeout(() => {
-          this.openLogin.emit();
-        }, 500);
-         */
+        this.router.navigate(['/dashboard']);
       }, 1500);
       
     } catch (error: any) {
