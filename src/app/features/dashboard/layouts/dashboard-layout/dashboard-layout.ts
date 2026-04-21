@@ -45,6 +45,7 @@ export class DashboardLayout implements OnInit, OnDestroy {
   isMobile = signal(false);
   sidebarExpanded = signal(false);
   showNotifications = signal(false);
+  isAdmin = signal(false);
 
   unreadCount = this.notificationService.unreadNotificationsCount;
   notificationHistory = this.notificationService.history;
@@ -58,7 +59,7 @@ export class DashboardLayout implements OnInit, OnDestroy {
     { label: 'Contraseña',        icon: 'pi pi-lock',          route: '/dashboard/cambiar-contrasena' },
   ];
 
-  bottomNavItems: NavItem[] = this.navItems.slice(0, 4);
+  bottomNavItems: NavItem[] = this.navItems.slice(0, 5);
 
   private resizeListener?: () => void;
   private notificationSub?: Subscription;
@@ -70,9 +71,14 @@ export class DashboardLayout implements OnInit, OnDestroy {
       window.addEventListener('resize', this.resizeListener);
     }
 
-    this.notificationSub = this.notificationService.notificationReceived$.subscribe(() => {
-      // history signal updates reactively
-    });
+    this.notificationSub = this.notificationService.notificationReceived$.subscribe(() => {});
+
+    const user = this.supabaseService.getUser();
+    if (user) {
+      this.supabaseService.getProfile(user.id).then(profile => {
+        this.isAdmin.set(profile?.role === 'admin');
+      }).catch(() => {});
+    }
   }
 
   ngOnDestroy() {

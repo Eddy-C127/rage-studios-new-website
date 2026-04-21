@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { SupabaseService } from '../../../../core/services/supabase-service';
 import { CreditsService } from '../../../../core/services/credits.service';
 import { PurchasesService, ICreditBatch } from '../../../../core/services/purchases.service';
@@ -39,7 +40,7 @@ interface BookingCard {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [NgClass, ToastModule],
+  imports: [NgClass, ToastModule, RouterModule],
   providers: [MessageService],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'

@@ -251,7 +251,8 @@ export class AdminNewsDialog implements OnChanges {
       const url = await this.newsService.uploadImage(file, tempId);
       this.form.image_url = url;
     } catch (e: any) {
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo subir la imagen' });
+      console.error('Upload error:', e);
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: e?.message ?? 'No se pudo subir la imagen' });
     } finally {
       this.uploadingImage.set(false);
     }

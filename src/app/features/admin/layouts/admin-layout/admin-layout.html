@@ -55,8 +55,8 @@
   <div class="main-content" [class.sidebar-open]="sidebarVisible() && !isMobile()">
     <!-- Botón para abrir sidebar en móvil -->
     @if (isMobile()) {
-      <p-button 
-        icon="pi pi-bars" 
+      <p-button
+        icon="pi pi-bars"
         [text]="true"
         [rounded]="true"
         severity="secondary"
@@ -64,7 +64,33 @@
         (onClick)="toggleSidebar()">
       </p-button>
     }
-    
+
     <router-outlet></router-outlet>
   </div>
+
+  <!-- Bottom nav mobile -->
+  @if (isMobile()) {
+    <nav class="admin-bottom-nav">
+      <button class="admin-bottom-nav__item" (click)="toggleSidebar()">
+        <i class="pi pi-bars"></i>
+        <span>Menú</span>
+      </button>
+      <button class="admin-bottom-nav__item" (click)="navigateTo('/admin')">
+        <i class="pi pi-shield"></i>
+        <span>Admin</span>
+      </button>
+      <button class="admin-bottom-nav__item admin-bottom-nav__item--user" (click)="goToDashboard()">
+        <i class="pi pi-home"></i>
+        <span>Mi App</span>
+      </button>
+      <button class="admin-bottom-nav__item admin-bottom-nav__item--website" (click)="navigateTo('/')">
+        <i class="pi pi-globe"></i>
+        <span>Website</span>
+      </button>
+      <button class="admin-bottom-nav__item admin-bottom-nav__item--logout" (click)="logout()">
+        <i class="pi pi-sign-out"></i>
+        <span>Salir</span>
+      </button>
+    </nav>
+  }
 </div>

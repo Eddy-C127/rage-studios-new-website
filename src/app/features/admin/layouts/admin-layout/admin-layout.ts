@@ -113,4 +113,13 @@ export class AdminLayout {
       this.sidebarVisible.set(false);
     }
   }
+
+  goToDashboard() {
+    this.router.navigate(['/dashboard']);
+  }
+
+  async logout() {
+    await this.supabaseService.signOut();
+    this.router.navigate(['/']);
+  }
 }

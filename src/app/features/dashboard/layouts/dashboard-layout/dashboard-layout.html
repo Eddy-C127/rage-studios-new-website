@@ -39,6 +39,15 @@
       <!-- Divider -->
       <div class="sidebar__divider"></div>
 
+      <!-- Admin link -->
+      @if (isAdmin()) {
+        <a routerLink="/admin" class="sidebar__item sidebar__item--admin">
+          <i class="pi pi-shield sidebar__item-icon"></i>
+          <span class="sidebar__item-label">Panel Admin</span>
+        </a>
+        <div class="sidebar__divider"></div>
+      }
+
       <!-- Utility actions -->
       <button class="sidebar__item" (click)="openInstallDialog()" title="Instalar App">
         <i class="pi pi-download sidebar__item-icon"></i>
@@ -48,6 +57,12 @@
         <i class="pi pi-refresh sidebar__item-icon"></i>
         <span class="sidebar__item-label">Recargar</span>
       </button>
+
+      <!-- Website -->
+      <a routerLink="/" class="sidebar__item sidebar__item--website">
+        <i class="pi pi-globe sidebar__item-icon"></i>
+        <span class="sidebar__item-label">Website</span>
+      </a>
 
       <!-- Logout -->
       <button class="sidebar__item sidebar__item--logout" (click)="logout()">
@@ -153,6 +168,20 @@
           </a>
         }
       }
+      @if (isAdmin()) {
+        <a routerLink="/admin" class="bottom-nav__item bottom-nav__item--admin">
+          <i class="pi pi-shield bottom-nav__icon"></i>
+          <span class="bottom-nav__label">Admin</span>
+        </a>
+      }
+      <a routerLink="/" class="bottom-nav__item bottom-nav__item--website">
+        <i class="pi pi-globe bottom-nav__icon"></i>
+        <span class="bottom-nav__label">Website</span>
+      </a>
+      <button class="bottom-nav__item bottom-nav__item--logout" (click)="logout()">
+        <i class="pi pi-sign-out bottom-nav__icon"></i>
+        <span class="bottom-nav__label">Salir</span>
+      </button>
     </nav>
   }
 
