@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
-import { NgClass, DatePipe } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../../../core/services/supabase-service';
 import { CreditsService } from '../../../../core/services/credits.service';
@@ -11,18 +11,16 @@ import { GiftcardUiService } from '../../../../core/services/giftcard-ui.service
 import { NewsService, NewsItem } from '../../../../core/services/news.service';
 import { PaymentService } from '../../../../core/services/payment.service';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { PwaInstallService } from '../../../../core/services/pwa-install.service';
 import { getTodayLocalYYYYMMDD, formatDateToLocalYYYYMMDD } from '../../../../core/functions/date-utils';
 import { Subscription } from 'rxjs';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
-
 interface DaySlot {
   date: Date;
-  label: string;   // 'LUN', 'MAR'…
-  num: number;     // day number
-  iso: string;     // YYYY-MM-DD
+  label: string;
+  num: number;
+  iso: string;
   hasBooking: boolean;
   isToday: boolean;
 }
@@ -41,7 +39,7 @@ interface BookingCard {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [NgClass, DatePipe, ToastModule],
+  imports: [NgClass, ToastModule],
   providers: [MessageService],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss'
@@ -58,45 +56,35 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private newsService = inject(NewsService);
   private paymentService = inject(PaymentService);
   private notificationService = inject(NotificationService);
-  protected pwaService = inject(PwaInstallService);
   private messageService = inject(MessageService);
-
 
   private authSub?: Subscription;
   private bookingSub?: Subscription;
-  private notificationSub?: Subscription;
   private userId = signal<string | null>(null);
 
   userProfile = signal<any>(null);
-
   streak = signal(14);
   membership = signal('ÉLITE');
 
-  // ── Week streak ─────────────────────────────────────────────────────
   readonly weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-  // Fake: L M X J . S . attended this week
   readonly weekAttended = [true, true, true, true, false, true, false];
 
-  // ── Quick actions ───────────────────────────────────────────────────
   quickActions = [
-    { id: 'reservar', label: 'Reservar Clase', icon: 'pi pi-calendar', route: '/dashboard/reservas' },
-    { id: 'espera',   label: 'Lista de Espera', icon: 'pi pi-clock',    route: '' },
-    { id: 'logros',   label: 'Mis Logros',      icon: 'pi pi-star',     route: '' },
-    { id: 'comprar',  label: 'Comprar Créditos', icon: 'pi pi-shopping-cart', route: '/checkout' }
+    { id: 'reservar', label: 'Reservar Clase',   icon: 'pi pi-calendar',      route: '/dashboard/reservas' },
+    { id: 'espera',   label: 'Lista de Espera',   icon: 'pi pi-clock',         route: '' },
+    { id: 'logros',   label: 'Mis Logros',        icon: 'pi pi-star',          route: '' },
+    { id: 'comprar',  label: 'Comprar Créditos',  icon: 'pi pi-shopping-cart', route: '/checkout' }
   ];
 
-  // ── News ─────────────────────────────────────────────────────────────
   news = signal<NewsItem[]>([]);
 
-  // ── Badges ───────────────────────────────────────────────────────────
   badges = [
-    { id: 1, label: '5 días seguidos', icon: '🔥', unlocked: true,  glow: '255,100,30'  },
+    { id: 1, label: '5 días seguidos',    icon: '🔥', unlocked: true,  glow: '255,100,30'  },
     { id: 2, label: 'Sin faltas este mes', icon: '⭐', unlocked: true,  glow: '250,200,0'   },
     { id: 3, label: 'Guerrera de lunes',   icon: '💪', unlocked: true,  glow: '239,68,68'   },
     { id: 4, label: 'Racha 3 semanas',     icon: '🏆', unlocked: false, glow: '120,120,120' }
   ];
 
-  // ── Credits accordion ────────────────────────────────────────────────
   creditsOpen = signal(true);
   creditBatches = signal<ICreditBatch[]>([]);
   loadingBatches = signal(false);
@@ -116,19 +104,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     })
   );
 
-  // ── Calendar + bookings ──────────────────────────────────────────────
   days = signal<DaySlot[]>([]);
   selectedDay = signal<DaySlot | null>(null);
   dayBookings = signal<BookingCard[]>([]);
   loadingBookings = signal(false);
   cancellingId = signal<string | null>(null);
-
-  // ── Notifications ────────────────────────────────────────────────────
-  showNotifications = signal(false);
-  unreadCount = this.notificationService.unreadNotificationsCount;
-  notificationHistory = this.notificationService.history;
-
-  // ─────────────────────────────────────────────────────────────────────
 
   ngOnInit() {
     this.authSub = this.supabase.currentUser$.subscribe(async user => {
@@ -141,53 +121,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
     });
 
-    // 🔄 Suscribirse a cambios en las reservas para refrescar créditos, calendario y notificaciones
     this.bookingSub = this.bookingUiService.bookingSuccess$.subscribe(async () => {
       const uid = this.userId();
       if (uid) {
-        await Promise.all([
-          this.loadCredits(),
-          this.buildWeekDays(uid)
-        ]);
-        
-        // Pequeña espera para dar tiempo al backend de generar el registro de notificación
-        setTimeout(() => this.refreshNotifications(), 1500);
+        await Promise.all([this.loadCredits(), this.buildWeekDays(uid)]);
       }
     });
 
-    // 🔔 Suscribirse a nuevas notificaciones recibidas en primer plano
-    this.notificationSub = this.notificationService.notificationReceived$.subscribe(() => {
-      this.refreshNotifications();
-    });
-
     this.newsService.getActiveNews().then(items => this.news.set(items)).catch(() => {});
-    
-    // Cargar historial de notificaciones inicial
-    this.refreshNotifications();
-  }
-
-  refreshNotifications() {
-    // notification history is reactive via notificationService.history signal
-  }
-
-  openInstallDialog() {
-    this.pwaService.openInstallDialog();
-  }
-
-  async reload() {
-    const currentUrl = this.router.url;
-    await this.router.navigateByUrl('/', { skipLocationChange: true });
-    await this.router.navigate([currentUrl]);
-  }
-
-  toggleNotifications() {
-    this.showNotifications.set(!this.showNotifications());
   }
 
   ngOnDestroy() {
     this.authSub?.unsubscribe();
     this.bookingSub?.unsubscribe();
-    this.notificationSub?.unsubscribe();
   }
 
   get displayName() {
@@ -195,11 +141,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return profile?.full_name ? profile.full_name.split(' ')[0] : 'Usuaria';
   }
 
-  // ── Build 7-day strip starting today ────────────────────────────────
   private async buildWeekDays(userId: string) {
     const bookingDates = await this.bookingService.getUserBookingDates(userId);
     const dateSet = new Set(bookingDates);
-
     const DAY_LABELS = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
     const today = new Date();
     const todayIso = getTodayLocalYYYYMMDD();
@@ -208,19 +152,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
       const iso = formatDateToLocalYYYYMMDD(d);
-      return {
-        date: d,
-        label: DAY_LABELS[d.getDay()],
-        num: d.getDate(),
-        iso,
-        hasBooking: dateSet.has(iso),
-        isToday: iso === todayIso
-      };
+      return { date: d, label: DAY_LABELS[d.getDay()], num: d.getDate(), iso, hasBooking: dateSet.has(iso), isToday: iso === todayIso };
     });
 
     this.days.set(slots);
-
-    // Select today by default
     const todaySlot = slots.find(s => s.isToday) ?? slots[0];
     await this.selectDay(todaySlot);
   }
@@ -254,43 +189,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     try {
       const uid = this.userId();
       if (uid) {
-        // 1. Cancelar notificaciones programadas
-        await this.notificationService.cancelBookingNotifications(booking.id).catch(err => 
+        await this.notificationService.cancelBookingNotifications(booking.id).catch(err =>
           console.warn('Error cancelando notificaciones:', err)
         );
 
-        // 2. Ejecutar cancelación en base de datos
         const result = await this.bookingService.cancelBookingWithRefund(booking.id, uid);
-        
+
         if (result.success) {
-          // ✅ MOSTRAR NOTIFICACIÓN DE ÉXITO (COLOR VERDE)
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Reserva cancelada y créditos devueltos'
-          });
-
-          // 3. Reembolsar créditos en lotes
+          this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Reserva cancelada y créditos devueltos' });
           await this.paymentService.refundCreditsForBooking(uid, booking.id, booking.credits_used);
-          
-          // 4. Refrescar señales globales de créditos
           await this.creditsService.refreshCredits();
-
-          // 5. Refrescar lotes locales para actualización en tiempo real
           await new Promise(resolve => setTimeout(resolve, 500));
           await this.loadCredits();
-
-          // 6. Refrescar vista local
           const day = this.selectedDay();
           if (day) await this.selectDay(day);
           await this.buildWeekDays(uid);
         } else {
-          // ❌ MOSTRAR NOTIFICACIÓN DE ERROR (COLOR ROJO)
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: result.error || 'No se pudo cancelar la reserva'
-          });
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: result.error || 'No se pudo cancelar la reserva' });
         }
       }
     } catch (error) {
@@ -326,7 +241,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   async loadCredits() {
     const uid = this.userId();
     if (!uid) return;
-    
     this.loadingBatches.set(true);
     try {
       const batches = await this.purchasesService.loadUserCreditBatches(uid);
@@ -343,27 +257,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  openBookingDialog() {
-    this.bookingUiService.openBookingDialog();
-  }
-
-  openPackagesModal() {
-    this.packagesUiService.openPackagesModal();
-  }
-
-  openGiftcardDialog() {
-    this.giftcardUiService.openGiftcardDialog();
-  }
+  openBookingDialog() { this.bookingUiService.openBookingDialog(); }
+  openPackagesModal() { this.packagesUiService.openPackagesModal(); }
+  openGiftcardDialog() { this.giftcardUiService.openGiftcardDialog(); }
 
   onActionClick(action: any) {
-    if (action.id === 'reservar') {
-      this.openBookingDialog();
-      return;
-    }
-    if (action.id === 'comprar') {
-      this.openPackagesModal();
-      return;
-    }
+    if (action.id === 'reservar') { this.openBookingDialog(); return; }
+    if (action.id === 'comprar') { this.openPackagesModal(); return; }
     if (action.route) this.router.navigate([action.route]);
   }
 }

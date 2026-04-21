@@ -65,12 +65,61 @@
     <header class="mobile-topbar">
       <span class="mobile-topbar__logo">RS</span>
       <div class="mobile-topbar__actions">
+
+        <!-- Descargar App -->
         <button class="mobile-topbar__btn" (click)="openInstallDialog()" title="Descargar App">
           <i class="pi pi-download"></i>
         </button>
+
+        <!-- Recargar -->
         <button class="mobile-topbar__btn" (click)="reload()" title="Recargar">
           <i class="pi pi-refresh"></i>
         </button>
+
+        <!-- Notificaciones -->
+        <div class="notif-wrapper">
+          <button class="mobile-topbar__btn" (click)="toggleNotifications()" title="Notificaciones">
+            <i class="pi pi-bell"></i>
+            @if (unreadCount() > 0) {
+              <span class="notif-badge">{{ unreadCount() > 9 ? '+9' : unreadCount() }}</span>
+            }
+          </button>
+
+          @if (showNotifications()) {
+            <div class="notif-panel">
+              <div class="notif-panel__header">
+                <span class="notif-panel__title">Notificaciones</span>
+                <button (click)="showNotifications.set(false)" class="notif-panel__close">
+                  <i class="pi pi-times"></i>
+                </button>
+              </div>
+
+              <div class="notif-panel__body">
+                @if (notificationHistory().length === 0) {
+                  <div class="notif-panel__empty">
+                    <i class="pi pi-bell-slash"></i>
+                    <p>No tienes notificaciones aún</p>
+                  </div>
+                } @else {
+                  @for (notif of notificationHistory(); track notif.id) {
+                    <div class="notif-item">
+                      <div class="notif-item__icon"
+                           [class.notif-item__icon--red]="notif.notification_type === 'cancellation_user'">
+                        <i class="pi" [class]="notif.notification_type === 'cancellation_user' ? 'pi-times' : 'pi-calendar'"></i>
+                      </div>
+                      <div class="notif-item__content">
+                        <span class="notif-item__title">{{ notif.message_payload.title }}</span>
+                        <p class="notif-item__body">{{ notif.message_payload.body }}</p>
+                        <span class="notif-item__time">{{ notif.sent_at | date:'d MMM, h:mm a' }}</span>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+
       </div>
     </header>
   }
@@ -116,4 +165,3 @@
 <app-packages-modal [(visible)]="packagesUiService.showPackagesModal"></app-packages-modal>
 <app-giftcard-redeem-dialog [(visible)]="giftcardUiService.showGiftcardDialog"></app-giftcard-redeem-dialog>
 <app-pwa-install-dialog></app-pwa-install-dialog>
-
