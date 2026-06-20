@@ -97,6 +97,21 @@ export class AdminLayout {
       routerLink: '/admin/excepciones',
     },
     {
+      label: 'Logros',
+      icon: 'pi pi-star',
+      routerLink: '/admin/logros',
+    },
+    {
+      label: 'Plan de Fidelización',
+      icon: 'pi pi-heart',
+      routerLink: '/admin/recompensas',
+    },
+    {
+      label: 'Entregas',
+      icon: 'pi pi-box',
+      routerLink: '/admin/entregas',
+    },
+    {
       label: 'Noticias',
       icon: 'pi pi-megaphone',
       routerLink: '/admin/noticias',

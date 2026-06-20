@@ -955,3 +955,194 @@
   from { transform: translateY(-6px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+// ── Walk-in: agregar persona a la clase ─────────────────────
+.walkin-add-btn {
+  margin-top: 12px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover { background: #f1f5f9; border-color: #94a3b8; }
+  i { font-size: 0.85rem; }
+}
+
+.walkin-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &__class {
+    font-size: 0.85rem;
+    color: #475569;
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+
+  &__label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    margin-bottom: -4px;
+  }
+
+  &__error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+}
+
+.walkin-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+
+  &__hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    padding: 8px 4px;
+  }
+}
+
+.walkin-client {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover { background: #f8fafc; border-color: #cbd5e1; }
+  &--disabled { opacity: 0.7; cursor: default; &:hover { background: #fff; border-color: #e2e8f0; } }
+
+  &__info { display: flex; flex-direction: column; min-width: 0; }
+  &__name { font-weight: 700; color: #0f172a; font-size: 0.92rem; }
+  &__phone { font-size: 0.78rem; color: #94a3b8; }
+
+  &__credits {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #047857;
+    background: #ecfdf5;
+    padding: 3px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+    &--zero { color: #b45309; background: #fffbeb; }
+  }
+
+  &__assign {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #2563eb;
+    padding: 3px 8px;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+}
+
+.walkin-selected-client {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 700;
+  color: #065f46;
+  font-size: 0.9rem;
+
+  i { color: #10b981; }
+  .walkin-change-client {
+    margin-left: auto;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #2563eb;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+}
+
+.walkin-beds {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &__row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+}
+
+.walkin-bed {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  background: #fff;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover:not(:disabled) { border-color: #10b981; }
+  &--selected { background: #0f172a; color: #fff; border-color: #0f172a; }
+  &--occupied {
+    background: #fee2e2;
+    border-color: #fecaca;
+    color: #ef4444;
+    cursor: not-allowed;
+  }
+}
+
+.walkin-confirm-btn {
+  margin-top: 4px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 16px;
+  border: none;
+  border-radius: 12px;
+  background: #0f172a;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}

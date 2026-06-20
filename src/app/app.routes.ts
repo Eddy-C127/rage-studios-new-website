@@ -72,6 +72,10 @@ export const routes: Routes = [
       {
         path: 'historial-creditos',
         loadComponent: () => import('./features/account/pages/credit-history/credit-history').then(m => m.CreditHistory)
+      },
+      {
+        path: 'logros',
+        loadComponent: () => import('./features/dashboard/pages/mis-logros/mis-logros').then(m => m.MisLogros)
       }
     ]
   },
@@ -169,6 +173,18 @@ export const routes: Routes = [
       {
         path: 'footer',
         loadComponent: () => import('./features/admin/pages/admin-footer/admin-footer').then(m => m.AdminFooter)
+      },
+      {
+        path: 'logros',
+        loadComponent: () => import('./features/admin/pages/admin-logros/admin-logros').then(m => m.AdminLogros)
+      },
+      {
+        path: 'recompensas',
+        loadComponent: () => import('./features/admin/pages/admin-recompensas/admin-recompensas').then(m => m.AdminRecompensas)
+      },
+      {
+        path: 'entregas',
+        loadComponent: () => import('./features/admin/pages/admin-entregas/admin-entregas').then(m => m.AdminEntregas)
       }
     ]
   },

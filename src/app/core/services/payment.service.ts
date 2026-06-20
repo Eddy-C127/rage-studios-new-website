@@ -55,7 +55,7 @@ export class PaymentService {
     // Ya no necesitamos crear una instancia independiente
   }
 
-  async createCheckoutSession(packageData: Package, userId: string) {
+  async createCheckoutSession(packageData: Package, userId: string, couponCode?: string | null) {
     try {
       // Solo ejecutar en el cliente
       if (!isPlatformBrowser(this.platformId)) {
@@ -90,6 +90,7 @@ export class PaymentService {
             purchaseId: purchase.id,
             successUrl,
             cancelUrl,
+            couponCode: couponCode ? couponCode.trim() : null,
           },
         }
       );

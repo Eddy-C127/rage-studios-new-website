@@ -408,6 +408,25 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 
       console.log('✅ Historial registrado');
 
+      // PASO 11.1: Marcar cupón como usado (si la compra usó uno)
+      try {
+        const meta = session.metadata || {};
+        if (meta.coupon_source === 'personal' && meta.coupon_id) {
+          await supabase
+            .from('coupons')
+            .update({ status: 'used', used_at: new Date().toISOString(), used_purchase_id: purchase.id })
+            .eq('id', meta.coupon_id)
+            .eq('status', 'active');
+          console.log(`🎟️ Cupón personal marcado como usado: ${meta.coupon_id}`);
+        } else if (meta.coupon_source === 'campaign' && meta.campaign_id) {
+          await supabase.rpc('increment_coupon_campaign_use', { p_id: meta.campaign_id });
+          console.log(`🎟️ Uso de campaña incrementado: ${meta.campaign_id}`);
+        }
+      } catch (couponErr) {
+        // No romper el flujo de compra por un fallo al marcar el cupón
+        console.error('⚠️ Error marcando cupón como usado:', couponErr?.message);
+      }
+
       // PASO 12: Respuesta exitosa
       const processingTime = Date.now() - startTime;
 

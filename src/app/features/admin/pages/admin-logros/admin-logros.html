@@ -1,0 +1,108 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="p-4 md:p-6">
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Logros</h1>
+      <p class="text-sm text-gray-500">Crea y edita los logros que desbloquean recompensas.</p>
+    </div>
+    <p-button label="Nuevo logro" icon="pi pi-plus" (onClick)="openCreate()"></p-button>
+  </div>
+
+  @if (loading()) {
+    <p class="text-gray-400">Cargando…</p>
+  } @else {
+    <p-table [value]="achievements()" styleClass="p-datatable-sm" [tableStyle]="{ 'min-width': '40rem' }">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Logro</th>
+          <th>Condición</th>
+          <th>Recompensa</th>
+          <th>Activo</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-a>
+        <tr>
+          <td>
+            <span class="text-xl mr-2">{{ a.icon }}</span>
+            <span class="font-semibold">{{ a.name }}</span>
+          </td>
+          <td>{{ a.condition_value }} {{ unitFor(a.condition_type) }}
+            <span class="text-gray-400 text-xs block">{{ conditionLabel(a.condition_type) }}</span>
+          </td>
+          <td>{{ rewardName(a.reward_id) }}</td>
+          <td>
+            <p-toggleswitch [ngModel]="a.is_active" (ngModelChange)="toggleActive(a)"></p-toggleswitch>
+          </td>
+          <td class="text-right whitespace-nowrap">
+            <p-button icon="pi pi-pencil" severity="secondary" [text]="true" (onClick)="openEdit(a)"></p-button>
+            <p-button icon="pi pi-trash" severity="danger" [text]="true" (onClick)="confirmDelete(a)"></p-button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="5" class="text-center text-gray-400 py-6">No hay logros. Crea el primero.</td></tr>
+      </ng-template>
+    </p-table>
+  }
+</div>
+
+<!-- Dialog crear/editar -->
+<p-dialog [(visible)]="showDialog" [modal]="true" [draggable]="false" [resizable]="false"
+          [style]="{ width: '92vw', maxWidth: '460px' }"
+          [header]="editing().id ? 'Editar logro' : 'Nuevo logro'">
+  <div class="flex flex-col gap-4 pt-2">
+    <div class="flex gap-3">
+      <div class="w-20">
+        <label class="block text-xs font-bold text-gray-500 mb-1">Icono</label>
+        <input pInputText class="w-full text-center text-xl" [ngModel]="editing().icon"
+               (ngModelChange)="patchEditing({ icon: $event })" maxlength="4" />
+      </div>
+      <div class="flex-1">
+        <label class="block text-xs font-bold text-gray-500 mb-1">Nombre</label>
+        <input pInputText class="w-full" [ngModel]="editing().name"
+               (ngModelChange)="patchEditing({ name: $event })" placeholder="6 días seguidos" />
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-gray-500 mb-1">Descripción (opcional)</label>
+      <input pInputText class="w-full" [ngModel]="editing().description"
+             (ngModelChange)="patchEditing({ description: $event })" />
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-gray-500 mb-1">Condición</label>
+      <p-select class="w-full" [options]="conditionTypes" optionLabel="label" optionValue="value"
+                [ngModel]="editing().condition_type"
+                (ngModelChange)="patchEditing({ condition_type: $event })"></p-select>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-gray-500 mb-1">Meta ({{ unitFor(editing().condition_type) }})</label>
+      <p-inputnumber class="w-full" [ngModel]="editing().condition_value" [min]="1"
+                     (ngModelChange)="patchEditing({ condition_value: $event })"></p-inputnumber>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-gray-500 mb-1">Recompensa</label>
+      <p-select class="w-full" [options]="rewardOptions()" optionLabel="label" optionValue="value"
+                [showClear]="true" placeholder="Sin recompensa"
+                [ngModel]="editing().reward_id"
+                (ngModelChange)="patchEditing({ reward_id: $event })"></p-select>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <p-toggleswitch [ngModel]="editing().is_active"
+                      (ngModelChange)="patchEditing({ is_active: $event })"></p-toggleswitch>
+      <span class="text-sm text-gray-600">Activo</span>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="showDialog.set(false)"></p-button>
+    <p-button label="Guardar" icon="pi pi-check" [loading]="saving()" (onClick)="save()"></p-button>
+  </ng-template>
+</p-dialog>

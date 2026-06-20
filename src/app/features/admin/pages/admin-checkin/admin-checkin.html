@@ -205,6 +205,10 @@
       <div class="class-summary__bar">
         <div class="class-summary__bar-fill" [style.width.%]="progressPct()"></div>
       </div>
+      <button type="button" class="walkin-add-btn" (click)="openWalkinDialog()">
+        <i class="pi pi-plus"></i>
+        <span>Agregar persona a la clase</span>
+      </button>
     </section>
 
     <!-- Concluded Lock Banner -->
@@ -288,5 +292,102 @@
       <span class="idle__text">Sin clases con reservas para hoy</span>
     </div>
   }
+
+  <!-- Diálogo: agregar walk-in a la clase -->
+  <p-dialog [(visible)]="showWalkinDialog"
+            [modal]="true"
+            [dismissableMask]="true"
+            [draggable]="false"
+            [resizable]="false"
+            [style]="{ width: '92vw', maxWidth: '460px' }"
+            header="Agregar persona a la clase"
+            (onHide)="closeWalkinDialog()">
+
+    <div class="walkin-dialog">
+      <div class="walkin-dialog__class">
+        Clase <strong>{{ selectedTime() }}</strong> · {{ selectedClass()?.coach_name || 'Sin coach' }}
+      </div>
+
+      @if (walkinStep() === 1) {
+        <!-- Paso 1: buscar cliente -->
+        <label class="walkin-dialog__label">Buscar cliente</label>
+        <input pInputText
+               class="w-full"
+               [ngModel]="clientQuery()"
+               (ngModelChange)="onClientQueryChange($event)"
+               (click)="$event.stopPropagation()"
+               placeholder="Nombre o teléfono…"
+               autocomplete="off" />
+
+        <div class="walkin-results">
+          @if (searchingClients()) {
+            <div class="walkin-results__hint"><span class="spinner spinner--sm"></span> Buscando…</div>
+          } @else if (clientQuery().trim().length < 2) {
+            <div class="walkin-results__hint">Escribe al menos 2 caracteres.</div>
+          } @else if (clientResults().length === 0) {
+            <div class="walkin-results__hint">Sin coincidencias.</div>
+          } @else {
+            @for (c of clientResults(); track c.id) {
+              <button type="button"
+                      class="walkin-client"
+                      [class.walkin-client--disabled]="c.available_credits < 1"
+                      (click)="c.available_credits < 1 ? null : selectClient(c)">
+                <span class="walkin-client__info">
+                  <span class="walkin-client__name">{{ c.full_name || 'Sin nombre' }}</span>
+                  @if (c.phone) { <span class="walkin-client__phone">{{ c.phone }}</span> }
+                </span>
+                @if (c.available_credits < 1) {
+                  <span class="walkin-client__credits walkin-client__credits--zero">Sin créditos</span>
+                  <span class="walkin-client__assign" (click)="$event.stopPropagation(); goToAssignCredits(c)">Asignar</span>
+                } @else {
+                  <span class="walkin-client__credits">{{ c.available_credits }} créd.</span>
+                }
+              </button>
+            }
+          }
+        </div>
+      } @else {
+        <!-- Paso 2: seleccionar cama -->
+        <div class="walkin-selected-client">
+          <i class="pi pi-user"></i>
+          <span>{{ selectedClient()?.full_name }}</span>
+          <button type="button" class="walkin-change-client" (click)="backToClientSearch()">Cambiar</button>
+        </div>
+
+        <label class="walkin-dialog__label">Selecciona la cama</label>
+        <div class="walkin-beds">
+          @for (row of bedRows; track $index) {
+            <div class="walkin-beds__row">
+              @for (bed of row; track bed) {
+                <button type="button"
+                        class="walkin-bed"
+                        [class.walkin-bed--occupied]="isBedDisabled(bed)"
+                        [class.walkin-bed--selected]="walkinSelectedBed() === bed"
+                        [disabled]="isBedDisabled(bed)"
+                        (click)="selectWalkinBed(bed)">
+                  {{ bed }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (walkinError()) {
+          <div class="walkin-dialog__error">{{ walkinError() }}</div>
+        }
+
+        <button type="button"
+                class="walkin-confirm-btn"
+                [disabled]="walkinSelectedBed() === null || registeringWalkin()"
+                (click)="confirmWalkin()">
+          @if (registeringWalkin()) {
+            <span class="spinner spinner--sm"></span> Registrando…
+          } @else {
+            <span>Confirmar y descontar 1 crédito</span>
+          }
+        </button>
+      }
+    </div>
+  </p-dialog>
 
 </div>
