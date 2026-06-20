@@ -45,6 +45,30 @@ export interface ClassInfo {
   is_current: boolean;
 }
 
+export interface ClientSearchResult {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  available_credits: number;
+}
+
+export type WalkinStatus =
+  | 'OK'
+  | 'NOT_ADMIN'
+  | 'RESTRICTED'
+  | 'ALREADY_BOOKED'
+  | 'BED_TAKEN'
+  | 'INSUFFICIENT_CREDITS'
+  | 'ERROR';
+
+export interface WalkinResult {
+  status_code: WalkinStatus;
+  message: string;
+  client_name?: string;
+  bed_number?: number;
+  booking_id?: string;
+}
+
 export interface RosterEntry {
   kind: 'booking' | 'membership';
   booking_id: string | null;
@@ -149,5 +173,35 @@ export class CheckinService {
       .rpc('admin_checkin_membership_today', { p_membership_schedule_id: membershipScheduleId });
     if (error) throw error;
     return data as ScanResult;
+  }
+
+  /** Busca clientes por nombre/teléfono (con créditos vigentes) para registrar walk-ins. */
+  async searchClients(query: string): Promise<ClientSearchResult[]> {
+    const { data, error } = await this.supabaseService.client
+      .rpc('admin_search_clients', { p_query: query });
+    if (error) throw error;
+    return Array.isArray(data) ? (data as ClientSearchResult[]) : [];
+  }
+
+  /**
+   * Registra un walk-in: crea la reserva, descuenta 1 crédito y marca la asistencia
+   * en una sola operación atómica del servidor.
+   */
+  async registerWalkin(params: {
+    userId: string;
+    sessionDate: string;
+    sessionTime: string;
+    bedNumber: number;
+    coachName: string;
+  }): Promise<WalkinResult> {
+    const { data, error } = await this.supabaseService.client.rpc('admin_register_walkin', {
+      p_user_id: params.userId,
+      p_session_date: params.sessionDate,
+      p_session_time: params.sessionTime,
+      p_bed_number: params.bedNumber,
+      p_coach_name: params.coachName,
+    });
+    if (error) throw error;
+    return data as WalkinResult;
   }
 }

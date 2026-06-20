@@ -52,11 +52,40 @@
               </div>
               
               <p-divider />
-              
+
+              <!-- Cupón de descuento -->
+              <div class="space-y-2">
+                <span class="text-gray-600 text-sm font-semibold">¿Tienes un cupón?</span>
+                @if (appliedDiscount()) {
+                  <div class="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                    <span class="text-sm font-bold text-green-700">
+                      <i class="pi pi-check-circle mr-1"></i>
+                      Cupón aplicado: {{ appliedDiscount() }}% off
+                    </span>
+                    <button type="button" class="text-xs text-red-500 font-bold" (click)="removeCoupon()">Quitar</button>
+                  </div>
+                } @else {
+                  <div class="flex gap-2">
+                    <input pInputText class="flex-1 uppercase" [ngModel]="couponInput()"
+                           (ngModelChange)="couponInput.set($event)" placeholder="Código (ej. EVENTO10)" />
+                    <p-button label="Aplicar" severity="secondary" [loading]="couponChecking()"
+                              [disabled]="!couponInput().trim()" (onClick)="applyCoupon()" />
+                  </div>
+                  @if (couponError()) {
+                    <p class="text-xs text-red-500">{{ couponError() }}</p>
+                  }
+                }
+              </div>
+
+              <p-divider />
+
               <div class="flex justify-between items-center text-xl">
                 <span class="font-bold text-gray-800">Total:</span>
                 <span class="font-bold text-green-600">
-                  {{ packageData()!.price | currency:'MXN':'symbol':'1.2-2' }}
+                  @if (appliedDiscount()) {
+                    <span class="text-sm text-gray-400 line-through mr-2">{{ packageData()!.price | currency:'MXN':'symbol':'1.2-2' }}</span>
+                  }
+                  {{ finalPrice() | currency:'MXN':'symbol':'1.2-2' }}
                 </span>
               </div>
             </div>

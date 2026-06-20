@@ -565,7 +565,9 @@
           </div>
           <div class="flex justify-between items-center mt-2 px-1">
              <span class="streak-status-hint" [innerHTML]="streakStatusLabel()"></span>
-             <span class="text-[10px] font-black text-black/25 uppercase tracking-tighter">{{ attendedDaysCount() }}/5 DÍAS</span>
+             <span class="text-[10px] font-black text-black/25 uppercase tracking-tighter">
+               @if (atMaxStreak()) { {{ streak() }} DÍAS 🔥 } @else { {{ streak() }}/{{ nextMilestone() }} DÍAS }
+             </span>
           </div>
         </div>
 
@@ -594,27 +596,49 @@
     <div>
       <div class="flex items-center px-4 mb-3 gap-2">
         <h3 class="text-[16px] font-black uppercase tracking-[0.2em] text-black/40">Logros</h3>
-        <span class="text-[8px] font-black tracking-[0.15em] bg-black/[0.04] border border-black/8 text-black/50 px-2 py-0.5 rounded uppercase">
-          Próximamente
-        </span>
+        @if (hasClaimableReward()) {
+          <span class="text-[8px] font-black tracking-[0.15em] bg-pop/10 border border-pop/20 text-pop px-2 py-0.5 rounded uppercase animate-pulse">
+            ¡Premio listo!
+          </span>
+        }
+        <a routerLink="/dashboard/logros" class="ml-auto text-[11px] font-bold text-pop flex items-center gap-1">
+          Ver todos <i class="pi pi-chevron-right text-[9px]"></i>
+        </a>
       </div>
-      <div class="flex gap-4 overflow-x-auto px-6 pb-8 pt-3 scrollbar-hide opacity-60 pointer-events-none">
-        @for (b of badges; track b.id) {
-          <div class="flex flex-col items-center gap-2 min-w-[80px] flex-shrink-0">
-            <div class="badge-wrap relative w-16 h-16 flex items-center justify-center opacity-35 grayscale">
-              <div class="relative w-16 h-16 rounded-2xl border border-black/8 flex items-center justify-center text-3xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] bg-white">
-                {{ b.icon }}
-                <div class="absolute inset-0 rounded-2xl flex items-center justify-center bg-black/[0.02]">
-                  <i class="pi pi-lock text-[10px] text-black/35"></i>
+      @if (achievements().length > 0) {
+        <div class="flex gap-4 overflow-x-auto px-6 pb-8 pt-3 scrollbar-hide">
+          @for (a of achievements(); track a.id) {
+            <a routerLink="/dashboard/logros" class="flex flex-col items-center gap-2 min-w-[80px] flex-shrink-0">
+              <div class="badge-wrap relative w-16 h-16 flex items-center justify-center"
+                   [class.opacity-35]="!a.unlocked" [class.grayscale]="!a.unlocked">
+                <div class="relative w-16 h-16 rounded-2xl border flex items-center justify-center text-3xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] bg-white"
+                     [class.border-black/8]="!a.claimable" [class.border-pop]="a.claimable">
+                  {{ a.icon }}
+                  @if (!a.unlocked) {
+                    <div class="absolute inset-0 rounded-2xl flex items-center justify-center bg-black/[0.02]">
+                      <i class="pi pi-lock text-[10px] text-black/35"></i>
+                    </div>
+                  } @else if (a.claimable) {
+                    <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-pop text-white flex items-center justify-center">
+                      <i class="pi pi-gift text-[9px]"></i>
+                    </div>
+                  } @else if (a.claimed) {
+                    <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                      <i class="pi pi-check text-[9px]"></i>
+                    </div>
+                  }
                 </div>
               </div>
-            </div>
-            <span class="text-[10px] font-bold text-center leading-tight tracking-wider uppercase w-20 text-black/22">
-              {{ b.label }}
-            </span>
-          </div>
-        }
-      </div>
+              <span class="text-[10px] font-bold text-center leading-tight tracking-wider uppercase w-20"
+                    [class.text-black/22]="!a.unlocked" [class.text-black/60]="a.unlocked">
+                {{ a.name }}
+              </span>
+            </a>
+          }
+        </div>
+      } @else {
+        <p class="px-6 pb-8 text-[12px] text-black/30">Aún no hay logros disponibles.</p>
+      }
     </div>
 
   </div>

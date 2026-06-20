@@ -1,0 +1,87 @@
+<p-toast position="top-center"></p-toast>
+
+<div class="logros-page">
+
+  <!-- Header -->
+  <header class="logros-header">
+    <a routerLink="/dashboard" class="logros-back" aria-label="Volver">
+      <i class="pi pi-arrow-left"></i>
+    </a>
+    <h1 class="logros-title">Mis Logros</h1>
+  </header>
+
+  <!-- Resumen de rachas -->
+  <section class="streak-cards">
+    <div class="streak-card">
+      <span class="streak-card__icon">🔥</span>
+      <span class="streak-card__value">{{ summary().daily_streak }}</span>
+      <span class="streak-card__label">Días seguidos</span>
+    </div>
+    <div class="streak-card">
+      <span class="streak-card__icon">☀️</span>
+      <span class="streak-card__value">{{ summary().sunday_streak }}</span>
+      <span class="streak-card__label">Domingos</span>
+    </div>
+    <div class="streak-card">
+      <span class="streak-card__icon">🎽</span>
+      <span class="streak-card__value">{{ summary().cumulative_classes }}</span>
+      <span class="streak-card__label">Clases totales</span>
+    </div>
+  </section>
+
+  <p class="logros-hint">
+    Acumula racha y reclama tu premio cuando quieras. <strong>Al reclamar, esa racha
+    vuelve a cero</strong> — tú decides si tomas el premio o sigues por uno mayor.
+  </p>
+
+  @if (loading()) {
+    <div class="logros-loading">
+      <span class="logros-spinner"></span> Cargando…
+    </div>
+  } @else if (achievements().length === 0) {
+    <div class="logros-empty">Aún no hay logros disponibles.</div>
+  } @else {
+    <div class="logros-list">
+      @for (a of achievements(); track a.id) {
+        <article class="logro-card"
+                 [class.logro-card--locked]="!a.unlocked"
+                 [class.logro-card--claimable]="a.claimable"
+                 [class.logro-card--claimed]="a.claimed">
+          <div class="logro-card__icon">
+            {{ a.icon }}
+            @if (a.claimable) { <span class="logro-card__badge logro-card__badge--gift"><i class="pi pi-gift"></i></span> }
+            @else if (a.claimed) { <span class="logro-card__badge logro-card__badge--done"><i class="pi pi-check"></i></span> }
+            @else if (!a.unlocked) { <span class="logro-card__badge logro-card__badge--lock"><i class="pi pi-lock"></i></span> }
+          </div>
+
+          <div class="logro-card__body">
+            <div class="logro-card__top">
+              <span class="logro-card__name">{{ a.name }}</span>
+              @if (a.reward) { <span class="logro-card__reward">{{ rewardLabel(a) }}</span> }
+            </div>
+
+            <div class="logro-card__progress-track">
+              <div class="logro-card__progress-fill" [style.width.%]="progressFor(a)"></div>
+            </div>
+            <span class="logro-card__progress-text">
+              {{ currentValueFor(a) }} / {{ a.condition_value }} {{ unitFor(a) }}
+            </span>
+          </div>
+
+          <div class="logro-card__action">
+            @if (a.claimable) {
+              <button class="logro-claim-btn"
+                      [disabled]="claimingId() === a.id"
+                      (click)="claim(a)">
+                @if (claimingId() === a.id) { <span class="logros-spinner logros-spinner--sm"></span> }
+                @else { Reclamar }
+              </button>
+            } @else if (a.claimed) {
+              <span class="logro-claimed-tag">Reclamado</span>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

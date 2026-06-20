@@ -22,6 +22,7 @@ import { MembershipService } from '../../../../core/services/membership.service'
 import { MembershipInfoDialog } from '../../../../shared/components/membership-info-dialog/membership-info-dialog';
 import { AppSettingsService } from '../../../../core/services/app-settings.service';
 import { AccessPassSheet } from '../../components/access-pass-sheet/access-pass-sheet';
+import { LoyaltyService, AchievementWithStatus } from '../../../../core/services/loyalty.service';
 
 interface DaySlot {
   date: Date;
@@ -67,6 +68,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private waitlistUiService = inject(WaitlistUiService);
   protected membershipService = inject(MembershipService);
   private appSettingsService = inject(AppSettingsService);
+  private loyaltyService = inject(LoyaltyService);
 
   private authSub?: Subscription;
   private bookingSub?: Subscription;
@@ -89,7 +91,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   quickActions = [
     { id: 'reservar', label: 'Reservar Clase',   icon: 'pi pi-calendar',      route: '/dashboard/reservas' },
     { id: 'espera',   label: 'Lista de Espera',   icon: 'pi pi-clock',         route: '' },
-    { id: 'logros',   label: 'Mis Logros',        icon: 'pi pi-star',          route: '' },
+    { id: 'logros',   label: 'Mis Logros',        icon: 'pi pi-star',          route: '/dashboard/logros' },
     { id: 'comprar',  label: 'Comprar Créditos',  icon: 'pi pi-shopping-cart', route: '/checkout' }
   ];
 
@@ -98,12 +100,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   selectedNews = signal<NewsItem | null>(null);
   showNewsDialog = signal<boolean>(false);
 
-  badges = [
-    { id: 1, label: '5 días seguidos',    icon: '🔥', unlocked: true,  glow: '255,100,30'  },
-    { id: 2, label: 'Sin faltas este mes', icon: '⭐', unlocked: true,  glow: '250,200,0'   },
-    { id: 3, label: 'Guerrera de lunes',   icon: '💪', unlocked: true,  glow: '239,68,68'   },
-    { id: 4, label: 'Racha 3 semanas',     icon: '🏆', unlocked: false, glow: '120,120,120' }
-  ];
+  achievements = signal<AchievementWithStatus[]>([]);
+  hasClaimableReward = computed(() => this.achievements().some(a => a.claimable));
 
   creditsOpen = signal(true);
   creditBatches = signal<ICreditBatch[]>([]);
@@ -136,22 +134,44 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.weekAttended().filter(attended => attended).length
   );
 
-  streakProgress = computed(() => {
-    const count = this.attendedDaysCount();
-    return Math.min((count / 5) * 100, 100);
+  // Hitos de racha diaria (6 / 15 / 30 …) según los logros configurados
+  dailyMilestones = computed(() =>
+    this.achievements()
+      .filter(a => a.condition_type === 'daily_streak')
+      .map(a => a.condition_value)
+      .sort((a, b) => a - b)
+  );
+
+  maxMilestone = computed(() => {
+    const ms = this.dailyMilestones();
+    return ms.length ? ms[ms.length - 1] : 0;
   });
 
-  isRecordBroken = computed(() => this.attendedDaysCount() > 5);
+  // Siguiente hito por alcanzar (o el máximo si ya los superó todos)
+  nextMilestone = computed(() => {
+    const s = this.streak();
+    const ms = this.dailyMilestones();
+    for (const m of ms) { if (s < m) return m; }
+    return ms.length ? ms[ms.length - 1] : 6;
+  });
+
+  // ¿Ya alcanzó/superó el último hito?
+  atMaxStreak = computed(() => this.maxMilestone() > 0 && this.streak() >= this.maxMilestone());
+
+  streakProgress = computed(() => {
+    const next = this.nextMilestone();
+    return next ? Math.min((this.streak() / next) * 100, 100) : 0;
+  });
+
+  isRecordBroken = computed(() => this.atMaxStreak());
 
   streakStatusLabel = computed(() => {
-    const count = this.attendedDaysCount();
-    if (count === 0) return 'EL PRIMER PASO <b>ES HOY!</b>';
-    if (count < 3) return 'SIGUE ASÍ, <b>HOY LO LOGRASTE!</b>';
-    if (count < 4) return '<b>CONECTA CON</b> TU FUERZA!';
-    if (count < 5) return 'DISCIPLINA <b>QUE FLUYE!</b>';
-    if (count === 5) return 'LOGRO IMPECABLE. <b>¡BRILLA!</b>';
-    if (count === 6) return '<b>MÁS ALLÁ</b> DE LO POSIBLE!';
-    return 'EQUILIBRIO Y <b>CONSTANCIA PURA!</b>';
+    const s = this.streak();
+    if (s === 0) return 'EL PRIMER PASO <b>ES HOY!</b>';
+    if (this.hasClaimableReward()) return '<b>¡PREMIO LISTO!</b> RECLÁMALO';
+    if (this.atMaxStreak()) return 'CONSTANCIA <b>PURA!</b>';
+    const left = this.nextMilestone() - s;
+    return `TE FALTA${left === 1 ? '' : 'N'} <b>${left} DÍA${left === 1 ? '' : 'S'}</b> PARA TU PREMIO`;
   });
 
   ngOnInit() {
@@ -362,9 +382,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!uid) return;
 
     try {
-      // 1. Cargar la racha real
-      const streakValue = await this.bookingService.calculateStreak(uid);
-      this.streak.set(streakValue);
+      // 1. Cargar la racha real (resumen del motor de fidelización) y los logros
+      const summary = await this.loyaltyService.getStreakSummary(uid);
+      this.streak.set(summary.daily_streak);
+      this.loyaltyService.getAchievements(uid)
+        .then(list => this.achievements.set(list))
+        .catch(err => console.error('Error loading achievements:', err));
 
       // 2. Cargar la siguiente cita inminente
       const next = await this.bookingService.getNextImmediateBooking(uid);
@@ -399,7 +422,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const bookings = await this.bookingService.getUserBookings(userId);
       // Solo reservas activas con asistencia confirmada (excluye canceladas)
       bookings.forEach(b => {
-        if (b.status === 'active' && b.attendance_status === 'attended') {
+        if (b.status !== 'cancelled' && b.attendance_status === 'attended') {
           const bDate = new Date(b.session_date + 'T00:00:00');
           const dayDiff = Math.round((bDate.getTime() - monday.getTime()) / (1000 * 60 * 60 * 24));
           if (dayDiff >= 0 && dayDiff < 7) {

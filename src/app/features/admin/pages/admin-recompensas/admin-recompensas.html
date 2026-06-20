@@ -1,0 +1,186 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="p-4 md:p-6">
+  <div class="mb-5">
+    <h1 class="text-2xl font-bold text-gray-900">Plan de Fidelización</h1>
+    <p class="text-sm text-gray-500">Recompensas que se ligan a los logros y cupones para eventos.</p>
+  </div>
+
+  <!-- ── Recompensas ─────────────────────────────────────────── -->
+  <section class="mb-10">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-bold text-gray-800">Recompensas</h2>
+      <p-button label="Nueva recompensa" icon="pi pi-plus" size="small" (onClick)="openCreateReward()"></p-button>
+    </div>
+
+    @if (loading()) {
+      <p class="text-gray-400">Cargando…</p>
+    } @else {
+      <p-table [value]="rewards()" styleClass="p-datatable-sm" [tableStyle]="{ 'min-width': '40rem' }">
+        <ng-template pTemplate="header">
+          <tr><th>Nombre</th><th>Tipo</th><th>Valor</th><th>Aplica a</th><th>Activa</th><th></th></tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-r>
+          <tr>
+            <td class="font-semibold">{{ r.name }}</td>
+            <td>{{ typeLabel(r.type) }}</td>
+            <td>{{ rewardValueSummary(r) }}</td>
+            <td class="text-xs text-gray-500">{{ packageNames(r.applicable_package_ids) }}</td>
+            <td><p-toggleswitch [ngModel]="r.is_active" (ngModelChange)="toggleRewardActive(r)"></p-toggleswitch></td>
+            <td class="text-right whitespace-nowrap">
+              <p-button icon="pi pi-pencil" severity="secondary" [text]="true" (onClick)="openEditReward(r)"></p-button>
+              <p-button icon="pi pi-trash" severity="danger" [text]="true" (onClick)="confirmDeleteReward(r)"></p-button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="6" class="text-center text-gray-400 py-6">No hay recompensas.</td></tr>
+        </ng-template>
+      </p-table>
+    }
+  </section>
+
+  <!-- ── Cupones de campaña ──────────────────────────────────── -->
+  <section>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-lg font-bold text-gray-800">Cupones de evento (manuales)</h2>
+      <p-button label="Nuevo cupón" icon="pi pi-plus" size="small" (onClick)="openCreateCampaign()"></p-button>
+    </div>
+
+    @if (!loading()) {
+      <p-table [value]="campaigns()" styleClass="p-datatable-sm" [tableStyle]="{ 'min-width': '40rem' }">
+        <ng-template pTemplate="header">
+          <tr><th>Código</th><th>Descuento</th><th>Usos</th><th>Expira</th><th>Aplica a</th><th>Activo</th><th></th></tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-c>
+          <tr>
+            <td class="font-mono font-bold">{{ c.code }}</td>
+            <td>{{ c.discount_percent }}%</td>
+            <td>{{ c.used_count }}<span class="text-gray-400">{{ c.max_uses ? ' / ' + c.max_uses : '' }}</span></td>
+            <td class="text-xs">{{ c.expires_at ? (c.expires_at | date:'dd/MM/yyyy') : 'Sin límite' }}</td>
+            <td class="text-xs text-gray-500">{{ packageNames(c.applicable_package_ids) }}</td>
+            <td><p-toggleswitch [ngModel]="c.is_active" (ngModelChange)="toggleCampaignActive(c)"></p-toggleswitch></td>
+            <td class="text-right whitespace-nowrap">
+              <p-button icon="pi pi-pencil" severity="secondary" [text]="true" (onClick)="openEditCampaign(c)"></p-button>
+              <p-button icon="pi pi-trash" severity="danger" [text]="true" (onClick)="confirmDeleteCampaign(c)"></p-button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr><td colspan="7" class="text-center text-gray-400 py-6">No hay cupones de evento.</td></tr>
+        </ng-template>
+      </p-table>
+    }
+  </section>
+</div>
+
+<!-- Dialog Recompensa -->
+<p-dialog [(visible)]="showRewardDialog" [modal]="true" [draggable]="false" [resizable]="false"
+          [style]="{ width: '92vw', maxWidth: '460px' }"
+          [header]="editingReward().id ? 'Editar recompensa' : 'Nueva recompensa'">
+  <div class="flex flex-col gap-4 pt-2">
+    <div>
+      <label class="block text-xs font-bold text-gray-500 mb-1">Nombre</label>
+      <input pInputText class="w-full" [ngModel]="editingReward().name"
+             (ngModelChange)="patchReward({ name: $event })" placeholder="10% de descuento" />
+    </div>
+    <div>
+      <label class="block text-xs font-bold text-gray-500 mb-1">Tipo</label>
+      <p-select class="w-full" [options]="rewardTypes" optionLabel="label" optionValue="value"
+                [ngModel]="editingReward().type"
+                (ngModelChange)="patchReward({ type: $event })"></p-select>
+    </div>
+
+    @if (editingReward().type === 'discount_coupon') {
+      <div>
+        <label class="block text-xs font-bold text-gray-500 mb-1">Porcentaje de descuento</label>
+        <p-inputnumber class="w-full" [ngModel]="rPercent()" (ngModelChange)="rPercent.set($event)"
+                       [min]="1" [max]="100" suffix="%"></p-inputnumber>
+      </div>
+    } @else if (editingReward().type === 'free_credits') {
+      <div class="flex gap-3">
+        <div class="flex-1">
+          <label class="block text-xs font-bold text-gray-500 mb-1">Créditos</label>
+          <p-inputnumber class="w-full" [ngModel]="rCredits()" (ngModelChange)="rCredits.set($event)" [min]="1"></p-inputnumber>
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs font-bold text-gray-500 mb-1">Vigencia (días)</label>
+          <p-inputnumber class="w-full" [ngModel]="rValidity()" (ngModelChange)="rValidity.set($event)" [min]="1"></p-inputnumber>
+        </div>
+      </div>
+    } @else {
+      <div>
+        <label class="block text-xs font-bold text-gray-500 mb-1">Descripción del premio</label>
+        <input pInputText class="w-full" [ngModel]="rLabel()" (ngModelChange)="rLabel.set($event)" placeholder="Termo Rage" />
+      </div>
+    }
+
+    @if (editingReward().type === 'discount_coupon') {
+      <div>
+        <label class="block text-xs font-bold text-gray-500 mb-1">Aplica a (vacío = todos los paquetes)</label>
+        <p-multiselect class="w-full" [options]="packages()" optionLabel="title" optionValue="id"
+                       [ngModel]="editingReward().applicable_package_ids"
+                       (ngModelChange)="patchReward({ applicable_package_ids: $event })"
+                       placeholder="Todos los paquetes"></p-multiselect>
+      </div>
+    }
+
+    <div class="flex items-center gap-2">
+      <p-toggleswitch [ngModel]="editingReward().is_active"
+                      (ngModelChange)="patchReward({ is_active: $event })"></p-toggleswitch>
+      <span class="text-sm text-gray-600">Activa</span>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="showRewardDialog.set(false)"></p-button>
+    <p-button label="Guardar" icon="pi pi-check" [loading]="saving()" (onClick)="saveReward()"></p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Dialog Campaña -->
+<p-dialog [(visible)]="showCampaignDialog" [modal]="true" [draggable]="false" [resizable]="false"
+          [style]="{ width: '92vw', maxWidth: '460px' }"
+          [header]="editingCampaign().id ? 'Editar cupón' : 'Nuevo cupón de evento'">
+  <div class="flex flex-col gap-4 pt-2">
+    <div>
+      <label class="block text-xs font-bold text-gray-500 mb-1">Código</label>
+      <input pInputText class="w-full font-mono uppercase" [ngModel]="editingCampaign().code"
+             (ngModelChange)="patchCampaign({ code: $event })" placeholder="EVENTO10" />
+    </div>
+    <div>
+      <label class="block text-xs font-bold text-gray-500 mb-1">Descuento</label>
+      <p-inputnumber class="w-full" [ngModel]="editingCampaign().discount_percent"
+                     (ngModelChange)="patchCampaign({ discount_percent: $event })"
+                     [min]="1" [max]="100" suffix="%"></p-inputnumber>
+    </div>
+    <div class="flex gap-3">
+      <div class="flex-1">
+        <label class="block text-xs font-bold text-gray-500 mb-1">Máx. usos (vacío = ilimitado)</label>
+        <p-inputnumber class="w-full" [ngModel]="editingCampaign().max_uses"
+                       (ngModelChange)="patchCampaign({ max_uses: $event })" [min]="1"></p-inputnumber>
+      </div>
+      <div class="flex-1">
+        <label class="block text-xs font-bold text-gray-500 mb-1">Expira (opcional)</label>
+        <p-datepicker class="w-full" [ngModel]="campExpiry()" (ngModelChange)="campExpiry.set($event)"
+                      dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body"></p-datepicker>
+      </div>
+    </div>
+    <div>
+      <label class="block text-xs font-bold text-gray-500 mb-1">Aplica a (vacío = todos los paquetes)</label>
+      <p-multiselect class="w-full" [options]="packages()" optionLabel="title" optionValue="id"
+                     [ngModel]="editingCampaign().applicable_package_ids"
+                     (ngModelChange)="patchCampaign({ applicable_package_ids: $event })"
+                     placeholder="Todos los paquetes"></p-multiselect>
+    </div>
+    <div class="flex items-center gap-2">
+      <p-toggleswitch [ngModel]="editingCampaign().is_active"
+                      (ngModelChange)="patchCampaign({ is_active: $event })"></p-toggleswitch>
+      <span class="text-sm text-gray-600">Activo</span>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="showCampaignDialog.set(false)"></p-button>
+    <p-button label="Guardar" icon="pi pi-check" [loading]="saving()" (onClick)="saveCampaign()"></p-button>
+  </ng-template>
+</p-dialog>

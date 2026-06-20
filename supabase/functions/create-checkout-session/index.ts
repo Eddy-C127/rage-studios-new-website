@@ -16,7 +16,7 @@ serve(async (req) => {
     const body = await req.json()
     console.log('Request body:', body)
 
-    const { packageData, userId, purchaseId, successUrl, cancelUrl } = body
+    const { packageData, userId, purchaseId, successUrl, cancelUrl, couponCode } = body
 
     console.log('URLs received:', { successUrl, cancelUrl })
 
@@ -59,6 +59,35 @@ serve(async (req) => {
       apiVersion: '2023-10-16',
     })
 
+    // 🎟️ Validar y aplicar cupón (autoritativo en el servidor)
+    let finalPrice = packageData.price
+    const couponMeta: Record<string, string> = {}
+    if (couponCode) {
+      const { data: couponResult, error: couponErr } = await supabase.rpc('validate_coupon', {
+        p_user_id: userId,
+        p_code: couponCode,
+        p_package_id: packageData.id,
+      })
+
+      if (couponErr) {
+        console.warn('Coupon validation error:', couponErr.message)
+      } else if (couponResult?.valid) {
+        const percent = Number(couponResult.discount_percent) || 0
+        finalPrice = Math.round(packageData.price * (1 - percent / 100) * 100) / 100
+        couponMeta.coupon_source = couponResult.source
+        couponMeta.coupon_discount = String(percent)
+        if (couponResult.source === 'personal') couponMeta.coupon_id = couponResult.coupon_id
+        if (couponResult.source === 'campaign') couponMeta.campaign_id = couponResult.campaign_id
+        console.log(`🎟️ Cupón aplicado (${percent}%): $${packageData.price} -> $${finalPrice}`)
+      } else {
+        console.warn('Cupón rechazado:', couponResult?.message)
+      }
+    }
+
+    // Guardar el monto final (con descuento) en la compra para que el webhook
+    // valide correctamente el monto pagado.
+    await supabase.from('purchases').update({ amount: finalPrice }).eq('id', purchaseId)
+
     const sessionConfig = {
       payment_method_types: ['card'],
       line_items: [
@@ -69,7 +98,7 @@ serve(async (req) => {
               name: packageData.title,
               description: `${packageData.classes_count || 'Ilimitadas'} clases - ${packageData.validity_days} días`,
             },
-            unit_amount: Math.round(packageData.price * 100),
+            unit_amount: Math.round(finalPrice * 100),
           },
           quantity: 1,
         },
@@ -81,6 +110,7 @@ serve(async (req) => {
         purchase_id: purchaseId,
         user_id: userId,
         package_id: packageData.id,
+        ...couponMeta,
       },
     }
 

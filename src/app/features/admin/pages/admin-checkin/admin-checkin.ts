@@ -1,7 +1,12 @@
 import { Component, inject, signal, computed, viewChild, ElementRef, AfterViewInit, OnDestroy, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CheckinService, ScanResult, ClassInfo, RosterEntry } from '../../../../core/services/checkin.service';
+import { Router } from '@angular/router';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { CheckinService, ScanResult, ClassInfo, RosterEntry, ClientSearchResult } from '../../../../core/services/checkin.service';
+import { BookingService } from '../../../../core/services/booking.service';
 
 /**
  * Estación de check-in para recepción.
@@ -16,13 +21,15 @@ import { CheckinService, ScanResult, ClassInfo, RosterEntry } from '../../../../
 @Component({
   selector: 'app-admin-checkin',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, DialogModule, ButtonModule, InputTextModule],
   templateUrl: './admin-checkin.html',
   styleUrl: './admin-checkin.scss'
 })
 export class AdminCheckin implements AfterViewInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private checkinService = inject(CheckinService);
+  private bookingService = inject(BookingService);
+  private router = inject(Router);
 
   private scanInput = viewChild<ElementRef<HTMLInputElement>>('scanInput');
 
@@ -381,6 +388,155 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
       case 'INVALID_TOKEN':
       default:
         return 'pi-ban';
+    }
+  }
+
+  // ── Walk-in (registro manual de quien entró por cama libre) ─────
+  readonly bedRows: number[][] = [
+    [1, 2, 3, 4, 5, 6, 7],
+    [8, 9, 10, 11, 12, 13, 14],
+  ];
+  showWalkinDialog = signal(false);
+  walkinStep = signal<1 | 2>(1);
+  clientQuery = signal('');
+  clientResults = signal<ClientSearchResult[]>([]);
+  searchingClients = signal(false);
+  selectedClient = signal<ClientSearchResult | null>(null);
+  walkinOccupiedBeds = signal<number[]>([]);
+  walkinCapacity = signal<number>(14);
+  walkinSelectedBed = signal<number | null>(null);
+  registeringWalkin = signal(false);
+  walkinError = signal<string | null>(null);
+  private searchDebounce?: ReturnType<typeof setTimeout>;
+
+  openWalkinDialog() {
+    if (!this.selectedTime()) return;
+    this.walkinStep.set(1);
+    this.clientQuery.set('');
+    this.clientResults.set([]);
+    this.selectedClient.set(null);
+    this.walkinSelectedBed.set(null);
+    this.walkinOccupiedBeds.set([]);
+    this.walkinError.set(null);
+    this.showWalkinDialog.set(true);
+  }
+
+  closeWalkinDialog() {
+    this.showWalkinDialog.set(false);
+  }
+
+  onClientQueryChange(value: string) {
+    this.clientQuery.set(value);
+    this.walkinError.set(null);
+    if (this.searchDebounce) clearTimeout(this.searchDebounce);
+    const term = value.trim();
+    if (term.length < 2) {
+      this.clientResults.set([]);
+      this.searchingClients.set(false);
+      return;
+    }
+    this.searchingClients.set(true);
+    this.searchDebounce = setTimeout(() => this.runClientSearch(term), 300);
+  }
+
+  private async runClientSearch(term: string) {
+    try {
+      const results = await this.checkinService.searchClients(term);
+      // Evitar carrera: solo aplicar si la query sigue siendo la misma
+      if (this.clientQuery().trim() === term) {
+        this.clientResults.set(results);
+      }
+    } catch {
+      this.clientResults.set([]);
+    } finally {
+      this.searchingClients.set(false);
+    }
+  }
+
+  async selectClient(client: ClientSearchResult) {
+    if (client.available_credits < 1) return; // sin créditos no se puede registrar
+    this.selectedClient.set(client);
+    this.walkinSelectedBed.set(null);
+    this.walkinStep.set(2);
+    await this.loadWalkinBeds();
+  }
+
+  backToClientSearch() {
+    this.walkinStep.set(1);
+    this.walkinError.set(null);
+  }
+
+  goToAssignCredits(client: ClientSearchResult) {
+    this.closeWalkinDialog();
+    this.router.navigate(['/admin/credits/assign'], { queryParams: { userId: client.id } });
+  }
+
+  private async loadWalkinBeds() {
+    const time = this.selectedTime();
+    const date = this.selectedDate();
+    if (!time || !date) return;
+    try {
+      const occupied = await this.bookingService.getOccupiedBeds(date, time + ':00');
+      this.walkinOccupiedBeds.set(occupied);
+    } catch {
+      this.walkinOccupiedBeds.set([]);
+    }
+    // Capacidad real del slot (para no ofrecer camas que excedan el aforo)
+    try {
+      const slots = await this.bookingService.getAvailableSlots(date);
+      const slot = slots.find(s => s.time === time);
+      this.walkinCapacity.set(slot?.capacity ?? 14);
+    } catch {
+      this.walkinCapacity.set(14);
+    }
+  }
+
+  isBedDisabled(bed: number): boolean {
+    return this.walkinOccupiedBeds().includes(bed) || bed > this.walkinCapacity();
+  }
+
+  selectWalkinBed(bed: number) {
+    if (this.isBedDisabled(bed)) return;
+    this.walkinSelectedBed.set(this.walkinSelectedBed() === bed ? null : bed);
+  }
+
+  async confirmWalkin() {
+    const client = this.selectedClient();
+    const bed = this.walkinSelectedBed();
+    const time = this.selectedTime();
+    const date = this.selectedDate();
+    if (!client || bed === null || !time || !date || this.registeringWalkin()) return;
+
+    this.registeringWalkin.set(true);
+    this.walkinError.set(null);
+    try {
+      const res = await this.checkinService.registerWalkin({
+        userId: client.id,
+        sessionDate: date,
+        sessionTime: time + ':00',
+        bedNumber: bed,
+        coachName: this.selectedClass()?.coach_name || 'Coach',
+      });
+
+      if (res.status_code === 'OK') {
+        this.beep(true);
+        this.closeWalkinDialog();
+        await this.refresh(); // la persona aparece ya palomeada en el roster
+      } else if (res.status_code === 'BED_TAKEN') {
+        // refrescar camas para reflejar la ocupación real
+        await this.loadWalkinBeds();
+        this.walkinSelectedBed.set(null);
+        this.walkinError.set(res.message);
+        this.beep(false);
+      } else {
+        this.walkinError.set(res.message);
+        this.beep(false);
+      }
+    } catch {
+      this.walkinError.set('Error al registrar. Intenta de nuevo.');
+      this.beep(false);
+    } finally {
+      this.registeringWalkin.set(false);
     }
   }
 
