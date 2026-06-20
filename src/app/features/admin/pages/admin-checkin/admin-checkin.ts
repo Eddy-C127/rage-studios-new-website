@@ -86,6 +86,9 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
 
   focusInput() {
     if (!isPlatformBrowser(this.platformId)) return;
+    // Mientras el diálogo de walk-in está abierto, NO robar el foco del lector:
+    // el usuario necesita escribir en el buscador / seleccionar cama.
+    if (this.showWalkinDialog()) return;
     const active = document.activeElement;
     if (active && active.tagName === 'INPUT' && !active.classList.contains('scan-input')) {
       return; // No interrumpir si el usuario está escribiendo en el input manual
@@ -423,6 +426,8 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
 
   closeWalkinDialog() {
     this.showWalkinDialog.set(false);
+    // Restaurar el foco del lector QR una vez cerrado el diálogo.
+    setTimeout(() => this.focusInput(), 0);
   }
 
   onClientQueryChange(value: string) {
