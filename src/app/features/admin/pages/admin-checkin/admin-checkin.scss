@@ -1118,12 +1118,53 @@
   transition: all 0.12s;
 
   &:hover:not(:disabled) { border-color: #10b981; }
-  &--selected { background: #0f172a; color: #fff; border-color: #0f172a; }
+
+  // Reservada pero SIN check-in: seleccionable, con borde ámbar de aviso.
+  &--reserved {
+    border-color: #f59e0b;
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  // Seleccionada (gana sobre reservada).
+  &--selected {
+    background: #0f172a !important;
+    color: #fff !important;
+    border-color: #0f172a !important;
+  }
+
+  // Con check-in: ocupada de verdad, no seleccionable.
   &--occupied {
     background: #fee2e2;
     border-color: #fecaca;
     color: #ef4444;
     cursor: not-allowed;
+  }
+
+  // Fuera del aforo del slot: no disponible.
+  &--unavailable {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #cbd5e1;
+    cursor: not-allowed;
+  }
+}
+
+.walkin-bed-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: #64748b;
+
+  span { display: inline-flex; align-items: center; gap: 5px; }
+  .dot {
+    width: 11px; height: 11px; border-radius: 3px; display: inline-block;
+    border: 1.5px solid;
+    &--occupied { background: #fee2e2; border-color: #fecaca; }
+    &--reserved { background: #fffbeb; border-color: #f59e0b; }
+    &--free { background: #fff; border-color: #cbd5e1; }
   }
 }
 

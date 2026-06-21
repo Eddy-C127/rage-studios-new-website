@@ -405,9 +405,29 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
   clientResults = signal<ClientSearchResult[]>([]);
   searchingClients = signal(false);
   selectedClient = signal<ClientSearchResult | null>(null);
-  walkinOccupiedBeds = signal<number[]>([]);
   walkinCapacity = signal<number>(14);
   walkinSelectedBed = signal<number | null>(null);
+
+  // Camas con CHECK-IN (asistió) en el turno seleccionado → ocupadas de verdad.
+  walkinAttendedBeds = computed(() => {
+    const beds = new Set<number>();
+    for (const e of this.roster()) {
+      if (e.attendance_status === 'attended') (e.bed_numbers || []).forEach(b => beds.add(b));
+    }
+    return beds;
+  });
+
+  // Camas con reserva pero SIN check-in → se pueden dar al walk-in (amarillo).
+  walkinReservedBeds = computed(() => {
+    const attended = this.walkinAttendedBeds();
+    const beds = new Set<number>();
+    for (const e of this.roster()) {
+      if (e.attendance_status !== 'attended') {
+        (e.bed_numbers || []).forEach(b => { if (!attended.has(b)) beds.add(b); });
+      }
+    }
+    return beds;
+  });
   registeringWalkin = signal(false);
   walkinError = signal<string | null>(null);
   private searchDebounce?: ReturnType<typeof setTimeout>;
@@ -419,7 +439,6 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
     this.clientResults.set([]);
     this.selectedClient.set(null);
     this.walkinSelectedBed.set(null);
-    this.walkinOccupiedBeds.set([]);
     this.walkinError.set(null);
     this.showWalkinDialog.set(true);
   }
@@ -480,12 +499,8 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
     const time = this.selectedTime();
     const date = this.selectedDate();
     if (!time || !date) return;
-    try {
-      const occupied = await this.bookingService.getOccupiedBeds(date, time + ':00');
-      this.walkinOccupiedBeds.set(occupied);
-    } catch {
-      this.walkinOccupiedBeds.set([]);
-    }
+    // Refrescar el roster para tener el estado de check-in al día.
+    await this.loadRoster();
     // Capacidad real del slot (para no ofrecer camas que excedan el aforo)
     try {
       const slots = await this.bookingService.getAvailableSlots(date);
@@ -496,8 +511,18 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
     }
   }
 
+  /** Cama con check-in confirmado → ocupada (roja, no seleccionable). */
+  isBedAttended(bed: number): boolean {
+    return this.walkinAttendedBeds().has(bed);
+  }
+
+  /** Cama reservada pero sin check-in → seleccionable, con aviso (amarilla). */
+  isBedReserved(bed: number): boolean {
+    return !this.isBedAttended(bed) && this.walkinReservedBeds().has(bed);
+  }
+
   isBedDisabled(bed: number): boolean {
-    return this.walkinOccupiedBeds().includes(bed) || bed > this.walkinCapacity();
+    return this.isBedAttended(bed) || bed > this.walkinCapacity();
   }
 
   selectWalkinBed(bed: number) {

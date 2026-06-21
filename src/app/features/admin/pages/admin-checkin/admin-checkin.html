@@ -361,7 +361,9 @@
               @for (bed of row; track bed) {
                 <button type="button"
                         class="walkin-bed"
-                        [class.walkin-bed--occupied]="isBedDisabled(bed)"
+                        [class.walkin-bed--occupied]="isBedAttended(bed)"
+                        [class.walkin-bed--reserved]="isBedReserved(bed)"
+                        [class.walkin-bed--unavailable]="bed > walkinCapacity()"
                         [class.walkin-bed--selected]="walkinSelectedBed() === bed"
                         [disabled]="isBedDisabled(bed)"
                         (click)="selectWalkinBed(bed)">
@@ -370,6 +372,12 @@
               }
             </div>
           }
+        </div>
+
+        <div class="walkin-bed-legend">
+          <span><i class="dot dot--occupied"></i> Con check-in</span>
+          <span><i class="dot dot--reserved"></i> Reservada (sin check-in)</span>
+          <span><i class="dot dot--free"></i> Libre</span>
         </div>
 
         @if (walkinError()) {
