@@ -53,10 +53,6 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
 
   expectedCount = computed(() => this.roster().length);
   checkedCount = computed(() => this.roster().filter(e => e.attended).length);
-  isEditingConcludedClass = signal(false);
-  isCurrentClassConcluded = computed(() => {
-    return this.isClassConcluded(this.selectedTime());
-  });
   progressPct = computed(() => {
     const total = this.expectedCount();
     return total === 0 ? 0 : Math.round((this.checkedCount() / total) * 100);
@@ -113,8 +109,7 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
   async changeDate(newDate: string) {
     if (!newDate || newDate === this.selectedDate()) return;
     this.selectedDate.set(newDate);
-    this.isEditingConcludedClass.set(false); // Lock it back when switching dates
-    
+
     // Volver a cargar las clases para el nuevo día
     await this.loadClasses();
     
@@ -177,25 +172,8 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
   selectClass(time: string) {
     if (time === this.selectedTime()) return;
     this.selectedTime.set(time);
-    this.isEditingConcludedClass.set(false); // Lock it back when switching classes
     this.loadRoster();
     this.focusInput();
-  }
-
-  isClassConcluded(sessionTime: string | null): boolean {
-    if (!sessionTime) return false;
-    if (!isPlatformBrowser(this.platformId)) return false;
-
-    const [hours, minutes] = sessionTime.split(':').map(Number);
-    const [year, month, day] = this.selectedDate().split('-').map(Number);
-    const now = new Date();
-    const classStartTime = new Date(year, month - 1, day, hours, minutes, 0);
-    const concludedTime = classStartTime.getTime() + (50 * 60 * 1000);
-    return now.getTime() > concludedTime;
-  }
-
-  enableEditingConcludedClass() {
-    this.isEditingConcludedClass.set(true);
   }
 
   // ── Escaneo ────────────────────────────────────────────────

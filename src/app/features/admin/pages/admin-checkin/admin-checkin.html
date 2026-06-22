@@ -211,23 +211,6 @@
       </button>
     </section>
 
-    <!-- Concluded Lock Banner -->
-    @if (isCurrentClassConcluded() && !isEditingConcludedClass()) {
-      <div class="concluded-lock-banner">
-        <div class="concluded-lock-banner__content">
-          <i class="pi pi-lock concluded-lock-banner__icon"></i>
-          <div class="concluded-lock-banner__text">
-            <h3 class="concluded-lock-banner__title">Clase Concluida (Solo Lectura)</h3>
-            <p class="concluded-lock-banner__description">Esta clase ya terminó. La lista está bloqueada para evitar cambios accidentales.</p>
-          </div>
-        </div>
-        <button class="concluded-lock-banner__btn" (click)="enableEditingConcludedClass()">
-          <i class="pi pi-pencil"></i>
-          <span>Editar asistencia</span>
-        </button>
-      </div>
-    }
-
     <!-- Roster -->
     <section class="roster">
       @if (loadingRoster() && roster().length === 0) {
@@ -242,7 +225,6 @@
                   [class.roster-row--done]="e.attendance_status === 'attended'"
                   [class.roster-row--missed]="e.attendance_status === 'missed'"
                   [class.roster-row--unattended]="e.attendance_status === 'unattended'"
-                  [class.roster-row--readonly]="isCurrentClassConcluded() && !isEditingConcludedClass()"
                   [disabled]="markingKey() === entryKey(e)"
                   (click)="toggleEntry(e)">
             <span class="roster-row__check" 
