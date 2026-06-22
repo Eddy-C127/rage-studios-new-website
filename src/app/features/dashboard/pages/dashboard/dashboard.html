@@ -610,13 +610,13 @@
           @for (a of achievements(); track a.id) {
             <a routerLink="/dashboard/logros" class="flex flex-col items-center gap-2 min-w-[80px] flex-shrink-0">
               <div class="badge-wrap relative w-16 h-16 flex items-center justify-center"
-                   [class.opacity-35]="!a.unlocked" [class.grayscale]="!a.unlocked">
+                   [class.opacity-60]="!a.unlocked">
                 <div class="relative w-16 h-16 rounded-2xl border flex items-center justify-center text-3xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] bg-white"
                      [class.border-black/8]="!a.claimable" [class.border-pop]="a.claimable">
                   {{ a.icon }}
                   @if (!a.unlocked) {
-                    <div class="absolute inset-0 rounded-2xl flex items-center justify-center bg-black/[0.02]">
-                      <i class="pi pi-lock text-[10px] text-black/35"></i>
+                    <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-slate-400 text-white flex items-center justify-center border-2 border-white">
+                      <i class="pi pi-lock text-[9px]"></i>
                     </div>
                   } @else if (a.claimable) {
                     <div class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-pop text-white flex items-center justify-center">
@@ -630,7 +630,7 @@
                 </div>
               </div>
               <span class="text-[10px] font-bold text-center leading-tight tracking-wider uppercase w-20"
-                    [class.text-black/22]="!a.unlocked" [class.text-black/60]="a.unlocked">
+                    [class.text-black/50]="!a.unlocked" [class.text-black/60]="a.unlocked">
                 {{ a.name }}
               </span>
             </a>
