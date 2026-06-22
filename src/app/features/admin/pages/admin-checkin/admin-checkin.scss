@@ -1096,3 +1096,63 @@
 
   &:disabled { opacity: 0.45; cursor: not-allowed; }
 }
+
+// ── Menú de estados de asistencia ──────────────────────────
+.roster-row__caret {
+  font-size: 10px;
+  opacity: 0.5;
+  margin-left: 6px;
+}
+
+.status-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 14px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    cursor: pointer;
+    transition: background 0.12s;
+    text-align: left;
+
+    // Objetivo táctil cómodo (mín. 44px).
+    min-height: 44px;
+
+    i:first-child {
+      font-size: 14px;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    span { flex: 1; }
+
+    &:hover { background: #f1f5f9; }
+
+    &--active {
+      background: #f8fafc;
+    }
+
+    &--attended i:first-child { color: #10b981; }
+    &--missed i:first-child { color: #ef4444; }
+    &--unattended i:first-child { color: #f59e0b; }
+    &--clear i:first-child { color: #94a3b8; }
+  }
+
+  &__dot {
+    font-size: 8px !important;
+    width: auto !important;
+    color: #0f172a;
+    flex-shrink: 0;
+  }
+}

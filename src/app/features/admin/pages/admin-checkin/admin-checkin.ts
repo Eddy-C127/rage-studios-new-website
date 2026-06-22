@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { Popover } from 'primeng/popover';
 import { CheckinService, ScanResult, ClassInfo, RosterEntry, ClientSearchResult } from '../../../../core/services/checkin.service';
 import { BookingService } from '../../../../core/services/booking.service';
 
@@ -21,7 +22,7 @@ import { BookingService } from '../../../../core/services/booking.service';
 @Component({
   selector: 'app-admin-checkin',
   standalone: true,
-  imports: [FormsModule, DatePipe, DialogModule, ButtonModule, InputTextModule],
+  imports: [FormsModule, DatePipe, DialogModule, ButtonModule, InputTextModule, Popover],
   templateUrl: './admin-checkin.html',
   styleUrl: './admin-checkin.scss'
 })
@@ -32,6 +33,10 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
   private router = inject(Router);
 
   private scanInput = viewChild<ElementRef<HTMLInputElement>>('scanInput');
+  private statusMenu = viewChild<Popover>('statusMenu');
+
+  // Persona del roster cuyo menú de estados está abierto.
+  menuEntry = signal<RosterEntry | null>(null);
 
   // ── Escaneo ────────────────────────────────────────────────
   buffer = '';
@@ -82,9 +87,9 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
 
   focusInput() {
     if (!isPlatformBrowser(this.platformId)) return;
-    // Mientras el diálogo de walk-in está abierto, NO robar el foco del lector:
-    // el usuario necesita escribir en el buscador / seleccionar cama.
-    if (this.showWalkinDialog()) return;
+    // Mientras el diálogo de walk-in o el menú de estados están abiertos, NO robar
+    // el foco del lector: el usuario necesita interactuar con ellos.
+    if (this.showWalkinDialog() || this.menuEntry()) return;
     const active = document.activeElement;
     if (active && active.tagName === 'INPUT' && !active.classList.contains('scan-input')) {
       return; // No interrumpir si el usuario está escribiendo en el input manual
@@ -283,26 +288,46 @@ export class AdminCheckin implements AfterViewInit, OnDestroy {
     );
   }
 
-  async toggleEntry(entry: RosterEntry) {
+  /** Abre el menú de estados anclado a la fila de esa persona. */
+  openStatusMenu(event: Event, entry: RosterEntry) {
     if (this.markingKey()) return;
+    // Evitar que el click llegue al listener global que reenfoca el lector.
+    event.stopPropagation();
+    this.menuEntry.set(entry);
+    this.statusMenu()?.toggle(event);
+  }
+
+  private closeStatusMenu() {
+    this.statusMenu()?.hide();
+    this.menuEntry.set(null);
+  }
+
+  /**
+   * Fija un estado concreto a la persona del menú abierto (selección directa,
+   * sin ciclar). Para socias VIP sin reserva, solo aplica 'attended' (materializa
+   * la reserva); el resto de estados no tiene sobre qué actuar.
+   */
+  async setStatus(status: 'attended' | 'missed' | 'unattended' | 'pending') {
+    const entry = this.menuEntry();
+    if (!entry || this.markingKey()) return;
     const key = this.entryKey(entry);
     const prevStatus = entry.attendance_status;
+    this.closeStatusMenu();
+
+    // Sin cambios reales: no hacer round-trip.
+    if (entry.kind === 'booking' && (entry.attendance_status ?? 'pending') === status) {
+      this.focusInput();
+      return;
+    }
+
     this.markingKey.set(key);
     try {
       if (entry.kind === 'booking' && entry.booking_id) {
-        // Cycle booking status: pending (null) -> attended -> missed -> unattended -> pending
-        let nextStatus: 'attended' | 'missed' | 'unattended' | 'pending' = 'attended';
-        if (entry.attendance_status === 'attended') {
-          nextStatus = 'missed';
-        } else if (entry.attendance_status === 'missed') {
-          nextStatus = 'unattended';
-        } else if (entry.attendance_status === 'unattended') {
-          nextStatus = 'pending';
-        }
         // Feedback inmediato: refleja el nuevo estado antes del round-trip.
-        this.patchEntry(key, nextStatus === 'pending' ? null : nextStatus);
-        await this.checkinService.markBooking(entry.booking_id, nextStatus);
+        this.patchEntry(key, status === 'pending' ? null : status);
+        await this.checkinService.markBooking(entry.booking_id, status);
       } else if (entry.kind === 'membership' && entry.membership_schedule_id) {
+        if (status !== 'attended') return; // VIP: solo "Asistió" tiene sentido
         this.patchEntry(key, 'attended');
         await this.checkinService.checkinMembership(entry.membership_schedule_id);
       }

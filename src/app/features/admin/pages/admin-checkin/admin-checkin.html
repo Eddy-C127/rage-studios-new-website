@@ -226,7 +226,7 @@
                   [class.roster-row--missed]="e.attendance_status === 'missed'"
                   [class.roster-row--unattended]="e.attendance_status === 'unattended'"
                   [disabled]="markingKey() === entryKey(e)"
-                  (click)="toggleEntry(e)">
+                  (click)="openStatusMenu($event, e)">
             <span class="roster-row__check" 
                   [class.roster-row__check--done]="e.attendance_status === 'attended'"
                   [class.roster-row__check--missed]="e.attendance_status === 'missed'"
@@ -263,6 +263,7 @@
               } @else {
                 Marcar
               }
+              <i class="pi pi-chevron-down roster-row__caret"></i>
             </span>
           </button>
         }
@@ -379,5 +380,50 @@
       }
     </div>
   </p-dialog>
+
+  <!-- Menú de estados de asistencia (selección directa, sin ciclar) -->
+  <p-popover #statusMenu (onHide)="menuEntry.set(null)">
+    @if (menuEntry(); as me) {
+      <div class="status-menu">
+        <button type="button"
+                class="status-menu__item status-menu__item--attended"
+                [class.status-menu__item--active]="me.attendance_status === 'attended'"
+                (click)="setStatus('attended')">
+          <i class="pi pi-check"></i>
+          <span>Asistió</span>
+          @if (me.attendance_status === 'attended') { <i class="pi pi-circle-fill status-menu__dot"></i> }
+        </button>
+
+        @if (me.kind === 'booking') {
+          <button type="button"
+                  class="status-menu__item status-menu__item--missed"
+                  [class.status-menu__item--active]="me.attendance_status === 'missed'"
+                  (click)="setStatus('missed')">
+            <i class="pi pi-calendar-minus"></i>
+            <span>No asistió</span>
+            @if (me.attendance_status === 'missed') { <i class="pi pi-circle-fill status-menu__dot"></i> }
+          </button>
+
+          <button type="button"
+                  class="status-menu__item status-menu__item--unattended"
+                  [class.status-menu__item--active]="me.attendance_status === 'unattended'"
+                  (click)="setStatus('unattended')">
+            <i class="pi pi-clock"></i>
+            <span>Sin check-in</span>
+            @if (me.attendance_status === 'unattended') { <i class="pi pi-circle-fill status-menu__dot"></i> }
+          </button>
+
+          <button type="button"
+                  class="status-menu__item status-menu__item--clear"
+                  [class.status-menu__item--active]="me.attendance_status === null"
+                  (click)="setStatus('pending')">
+            <i class="pi pi-minus-circle"></i>
+            <span>Quitar marca</span>
+            @if (me.attendance_status === null) { <i class="pi pi-circle-fill status-menu__dot"></i> }
+          </button>
+        }
+      </div>
+    }
+  </p-popover>
 
 </div>
